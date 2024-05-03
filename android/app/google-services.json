@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "363780177666",
+    "project_id": "loyalty-linx-f71d9",
+    "storage_bucket": "loyalty-linx-f71d9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363780177666:android:7c7318baf8e19cf1e48c1b",
+        "android_client_info": {
+          "package_name": "com.example.loyaltylinx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRPPHyU14z_1VL6j4UdolkkiZxAJuekww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
