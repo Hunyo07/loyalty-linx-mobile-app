@@ -5,11 +5,9 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import 'package:loyaltylinx/pages/auth/verfication.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:loyaltylinx/pages/auth/login.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 final _emailController = TextEditingController();
@@ -48,16 +46,6 @@ const apiUrlValidate =
 class _NumberRegisterState extends State<NumberRegister> {
   final _formKey = GlobalKey<FormState>();
 
-  Future<void> saveUserData(Map<String, dynamic> userData) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', jsonEncode(userData));
-  }
-
-  Future<void> saveUserToken(Map<String, dynamic> userToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_token', jsonEncode(userToken));
-  }
-
   Future register(context) async {
     showDialog(
         barrierColor: Theme.of(context).colorScheme.background,
@@ -84,13 +72,19 @@ class _NumberRegisterState extends State<NumberRegister> {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      Navigator.of(context).pushAndRemoveUntil(
-          routeTransition(Verification(
-            apiUrlValidate: apiUrlValidate,
-            apiUrlLogin: apiUrls,
-            passWord: _passwordConfirmController.text,
-            email: _emailController.text,
-            mobileNo: "$phoneNumber",
+      // Navigator.of(context).pushAndRemoveUntil(
+      //     routeTransition(Verification(
+      //       apiUrlValidate: apiUrlValidate,
+      //       apiUrlLogin: apiUrls,
+      //       passWord: _passwordConfirmController.text,
+      //       email: _emailController.text,
+      //       mobileNo: "$phoneNumber",
+      //     )),
+      //     (route) => false);
+      Navigator.pushAndRemoveUntil(
+          context,
+          routeTransition(LoginPage(
+            mobileNo: phoneNumber,
           )),
           (route) => false);
       _emailController.clear();
@@ -104,6 +98,7 @@ class _NumberRegisterState extends State<NumberRegister> {
       _monthController.clear();
       _yearController.clear();
     } else {
+      Navigator.of(context, rootNavigator: true).pop();
       final json = jsonDecode(response.body);
       final message = json['message'];
       await showMessage(title: "Failed to register", message: message);
@@ -211,9 +206,6 @@ class _NumberRegisterState extends State<NumberRegister> {
                     ),
                   ),
                   const SizedBox(height: 16.0),
-                  const Row(
-                    children: [Text("Birthdate")],
-                  ),
                   const SizedBox(height: 16.0),
                   const Row(children: [
                     Text('Mobile Number'),
@@ -227,8 +219,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                       selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
                     ),
                     onInputChanged: (PhoneNumber number) {
-                      // print(number.phoneNumber);
-                      phoneNumber = number.phoneNumber;
+                      // print(number);
+                      phoneNumber = "0${number.phoneNumber!.substring(3)}";
+                      // print(phoneNumber);
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -247,6 +240,7 @@ class _NumberRegisterState extends State<NumberRegister> {
                     spaceBetweenSelectorAndTextField: 1,
                     autoValidateMode: AutovalidateMode.disabled,
                     inputDecoration: InputDecoration(
+                        hintText: '09*********',
                         errorStyle: const TextStyle(fontSize: 10),
                         errorMaxLines: 2,
                         focusedErrorBorder: const OutlineInputBorder(
@@ -299,9 +293,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                         return 'Please enter a password';
                       }
                       if (!RegExp(
-                              r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$')
+                              r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
                           .hasMatch(value)) {
-                        return 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit';
+                        return 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one digit and one special character';
                       }
                       if (value != _passwordConfirmController.text) {
                         return 'Password not match';
@@ -341,6 +335,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                         )),
                     textInputAction: TextInputAction.done,
                     obscureText: _obscureText,
+                    onTapOutside: (event) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
                   ),
                   const SizedBox(
                     height: 16,
@@ -352,6 +349,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                     height: 16,
                   ),
                   TextFormField(
+                    onTapOutside: (event) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
                     controller: _passwordConfirmController,
                     onChanged: (value) {},
                     validator: (value) {
@@ -438,6 +438,9 @@ class _NumberRegisterState extends State<NumberRegister> {
       inputFormatters: [LengthLimitingTextInputFormatter(numLength)],
       onChanged: (value) {
         onChange(value);
+      },
+      onTapOutside: (event) {
+        FocusManager.instance.primaryFocus?.unfocus();
       },
       controller: controller,
       validator: (value) => validator(value),

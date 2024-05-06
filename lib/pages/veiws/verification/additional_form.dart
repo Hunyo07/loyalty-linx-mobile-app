@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:loyaltylinx/pages/veiws/verification/selection_id.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 String? city;
 String? district;
@@ -74,20 +73,6 @@ Future<List<SelectedListItem>> fetchDataCity(String provinceCode) async {
   }
 }
 
-Object? token;
-List<Object>? userData0;
-
-getUserData() async {
-  final prefs = await SharedPreferences.getInstance();
-  token = prefs.getString('user_token');
-  final userData = prefs.getString('user_data');
-  if (userData != null) {
-    userData0 = [jsonDecode(userData)];
-  } else {
-    debugPrint('User data not found');
-  }
-}
-
 const List<String> list = <String>[
   'Male',
   'Female',
@@ -104,7 +89,6 @@ class _AddFormState extends State<AddForm> {
   String? selectedCity;
   @override
   void initState() {
-    getUserData();
     fetchData();
     super.initState();
     _provinceTextEditingController.addListener(() {
@@ -133,7 +117,7 @@ class _AddFormState extends State<AddForm> {
                   });
               Navigator.pushAndRemoveUntil(
                   context,
-                  routeTransition(BottomNavBarExample(userData: userData0!)),
+                  routeTransition(BottomNavBarExample(userData: userData1)),
                   (route) => false);
             },
             icon: const Icon(Icons.arrow_back)),
@@ -341,7 +325,9 @@ class _AddFormState extends State<AddForm> {
                         ),
                         birthDate(context, _postalController, 4, "0000",
                             (value) {
-                          if (value == null || value.isEmpty) {
+                          if (value == null ||
+                              value.isEmpty ||
+                              value.length < 4) {
                             return 'Please input postal code';
                           }
                         }, TextInputType.number),
@@ -438,11 +424,10 @@ class _AddFormState extends State<AddForm> {
   @override
   void dispose() {
     super.dispose();
-    // _cityTextEditingController.clear();
-    // _provinceTextEditingController.clear();
-    // _addressController.clear();
-    // _postalController.clear();
-    // _genderController.clear();
+    _provinceTextEditingController.clear();
+    _addressController.clear();
+    _postalController.clear();
+    _genderController.clear();
   }
 }
 
@@ -611,6 +596,9 @@ TextFormField birthDate(BuildContext context, controller, int inputLimit,
     validator: (value) => validator(value),
     onChanged: (value) {},
     controller: controller,
+    onTapOutside: (event) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    },
     inputFormatters: [LengthLimitingTextInputFormatter(inputLimit)],
     keyboardType: textInputType,
     decoration: InputDecoration(

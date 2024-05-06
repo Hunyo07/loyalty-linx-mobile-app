@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:loyaltylinx/pages/auth/login.dart';
-import 'package:loyaltylinx/pages/auth/otp_verification.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,15 +32,14 @@ final _recoveryController = TextEditingController();
 enum SingingCharacter { mobileNumber, email }
 
 Future<void> sendMethod(context, widget) async {
-  Navigator.of(context).pushAndRemoveUntil(
-      routeTransition(OtpVerification(
-          apiUrlValidate: widget.apiUrlValidate,
-          apiUrlLogin: widget.apiUrlLogin,
-          email: widget.email,
-          passWord: widget.passWord,
-          sendMethod: _sendVia,
-          sendTo: _sendVia == 'Email' ? widget.email : widget.mobileNo)),
-      (Route<dynamic> route) => false);
+  // Navigator.of(context).pushAndRemoveUntil(
+  //     routeTransition(OtpVerification(
+  //         apiUrlValidate: widget.apiUrlValidate,
+  //         email: widget.email,
+  //         passWord: widget.passWord,
+  //         sendMethod: _sendVia,
+  //         sendTo: _sendVia == 'Email' ? widget.email : widget.mobileNo)),
+  //     (Route<dynamic> route) => false);
 }
 
 SingingCharacter? _character = SingingCharacter.email;

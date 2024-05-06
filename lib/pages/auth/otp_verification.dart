@@ -1,34 +1,29 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:loyaltylinx/main.dart';
 import 'package:loyaltylinx/pages/auth/login.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class OtpVerification extends StatefulWidget {
-  final String passWord;
   final String sendMethod;
-  final String sendTo;
-  final String email;
-  final String apiUrlLogin;
   final String apiUrlValidate;
-
+  final Map<String, dynamic> token;
   const OtpVerification(
       {super.key,
       required this.sendMethod,
-      required this.passWord,
-      required this.sendTo,
-      required this.email,
-      required this.apiUrlLogin,
-      required this.apiUrlValidate});
+      required this.apiUrlValidate,
+      required this.token});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _OtpVerificationState createState() => _OtpVerificationState();
+  State<OtpVerification> createState() => _OtpVerificationState();
 }
 
 class _OtpVerificationState extends State<OtpVerification> {
@@ -38,22 +33,13 @@ class _OtpVerificationState extends State<OtpVerification> {
 
   @override
   Widget build(BuildContext context) {
-    Future<void> saveUserData(Map<String, dynamic> userData) async {
+    Future<void> saveUserToken(Map<String, dynamic> objectToken) async {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(userData));
+      await prefs.setString('user_token', jsonEncode(objectToken));
     }
 
-    Future<void> saveUserRigester(Map<String, dynamic> userRegister) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_register', jsonEncode(userRegister));
-    }
-
-    Future<void> saveUserToken(userToken) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_token', jsonEncode(userToken));
-    }
-
-    Future<void> getProfile(String token, context) async {
+    Future<void> getProfile(
+        String token, Map<String, dynamic> objectToken, context) async {
       final response = await http.get(
         Uri.parse(apiUrlProfile),
         headers: {
@@ -64,12 +50,17 @@ class _OtpVerificationState extends State<OtpVerification> {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final userData = json['userProfile'];
-        Navigator.pushAndRemoveUntil(
-            context,
-            routeTransition(BottomNavBarExample(userData: [userData])),
-            (route) => false);
-        saveUserToken(token);
-        saveUserData(json);
+        if (userData != null) {
+          userData0 = [userData];
+          tokenMain = objectToken['token'];
+          Navigator.pushAndRemoveUntil(
+              context,
+              routeTransition(BottomNavBarExample(userData: [userData])),
+              (route) => false);
+          saveUserToken(objectToken);
+        } else {
+          debugPrint("its Empty");
+        }
       } else {
         Navigator.of(context, rootNavigator: true).pop();
         final json = jsonDecode(response.body);
@@ -78,46 +69,25 @@ class _OtpVerificationState extends State<OtpVerification> {
       }
     }
 
-    Future validate(String token, code, context) async {
-      var url = Uri.parse(widget.apiUrlValidate);
+    Future<void> validate(String token, Map<String, dynamic> objectToken,
+        String code, context) async {
+      var url = Uri.parse(
+          'https://loyaltylinx.cyclic.app/api/user/validate-code-login');
       var response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'secretCode': "$code"}),
+        body: jsonEncode({'secretCode': code}),
       );
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        saveUserRigester(json);
-        getProfile(token, context);
+        // final json = jsonDecode(response.body);
+        getProfile(token, objectToken, context);
       } else {
-        final json = jsonDecode(response.body);
-        debugPrint(json.toString());
+        // final json = jsonDecode(response.body);
         Navigator.of(context, rootNavigator: true).pop();
-        await showMessage(title: "Failed to login", message: "Invalid code");
-      }
-    }
-
-    Future login(String email, String password, String code, context) async {
-      final response = await http.post(
-        Uri.parse(apiUrlLogin),
-        headers: {'Content-Type': 'application/json'},
-        body:
-            jsonEncode({'email': email, 'password': password, 'role': 'user'}),
-      );
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final token = json['token'];
-        final code1 = json['userCode'];
-        validate(token, code, context);
-        debugPrint(code1);
-      } else {
-        final json = jsonDecode(response.body);
-        final message = json['message'];
-        await showMessage(title: "Failed to login", message: message);
+        // await showMessage(title: "Failed to login", message: message);
       }
     }
 
@@ -140,12 +110,12 @@ class _OtpVerificationState extends State<OtpVerification> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              Text('We sent code via ${widget.sendMethod} to',
+              Text('We sent code via ${widget.sendMethod}',
                   style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.secondary,
                       fontWeight: FontWeight.w500)),
-              Text(widget.sendTo,
+              Text("",
                   style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue.shade400,
@@ -159,7 +129,7 @@ class _OtpVerificationState extends State<OtpVerification> {
                 onCodeChanged: (value) {
                   setState(() {});
                 },
-                onSubmit: (value) {
+                onSubmit: (value) async {
                   showDialog(
                       barrierColor: Theme.of(context).colorScheme.background,
                       barrierDismissible: false,
@@ -167,10 +137,10 @@ class _OtpVerificationState extends State<OtpVerification> {
                       builder: (context) {
                         return const Center(child: CircularProgressIndicator());
                       });
-                  setState(() {
-                    clear = true;
-                  });
-                  login(widget.email, widget.passWord, value, context);
+                  final tokenOnly = widget.token['token'];
+                  final tokenObject = widget.token;
+                  final valueCode = value;
+                  validate(tokenOnly, tokenObject, valueCode, context);
                 },
               ),
               const SizedBox(height: 20),
@@ -185,7 +155,7 @@ class _OtpVerificationState extends State<OtpVerification> {
                   ),
                 ),
                 onPressed: () {
-                  // debugPrint(widget.secretCode);
+                  // debugPrint(widget);
                 },
                 child: const Text(
                   'Resend',

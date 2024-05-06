@@ -1,38 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:loyaltylinx/pages/auth/otp_verification.dart';
 
 class Verification extends StatefulWidget {
   final String passWord;
   final String mobileNo;
   final String email;
-  final String apiUrlLogin;
   final String apiUrlValidate;
   const Verification(
       {super.key,
       required this.email,
       required this.mobileNo,
       required this.passWord,
-      required this.apiUrlLogin,
       required this.apiUrlValidate});
 
   @override
   State<Verification> createState() => _VerificationState();
 }
 
-var _sendVia = 'Email';
+// var _sendVia = 'Email';
 
 enum SingingCharacter { mobileNumber, email }
 
 Future<void> sendMethod(context, widget) async {
-  Navigator.of(context).pushAndRemoveUntil(
-      routeTransition(OtpVerification(
-          apiUrlValidate: widget.apiUrlValidate,
-          apiUrlLogin: widget.apiUrlLogin,
-          email: widget.email,
-          passWord: widget.passWord,
-          sendMethod: _sendVia,
-          sendTo: _sendVia == 'Email' ? widget.email : widget.mobileNo)),
-      (Route<dynamic> route) => false);
+  // Navigator.of(context).pushAndRemoveUntil(
+  //     routeTransition(OtpVerification(
+  //         apiUrlValidate: widget.apiUrlValidate,
+  //         email: widget.email,
+  //         passWord: widget.passWord,
+  //         sendMethod: _sendVia,
+  //         sendTo: _sendVia == 'Email' ? widget.email : widget.mobileNo)),
+  //     (Route<dynamic> route) => false);
 }
 
 SingingCharacter? _character = SingingCharacter.email;
@@ -72,7 +68,7 @@ class _VerificationState extends State<Verification> {
             leading: Radio<SingingCharacter>(
               onChanged: (SingingCharacter? value) {
                 setState(() {
-                  _sendVia = "Email";
+                  // _sendVia = "Email";
                   _character = value;
                 });
               },
@@ -86,7 +82,7 @@ class _VerificationState extends State<Verification> {
             leading: Radio<SingingCharacter>(
               onChanged: (SingingCharacter? value) {
                 setState(() {
-                  _sendVia = "MobileNo";
+                  // _sendVia = "MobileNo";
                   _character = value;
                 });
               },

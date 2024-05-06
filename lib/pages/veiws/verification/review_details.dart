@@ -5,12 +5,12 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/main.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:loyaltylinx/pages/veiws/profile.dart';
 import 'package:loyaltylinx/pages/veiws/verification/additional_form.dart';
 import 'package:http/http.dart' as http;
 import 'package:loyaltylinx/pages/veiws/verification/authorization.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PreviewDetails extends StatefulWidget {
   final String address;
@@ -48,28 +48,21 @@ class PreviewDetailsState extends State<PreviewDetails> {
   }
 
   Future<void> uploadFileFacePhoto(File imageFile, String token) async {
-    // Define the endpoint URL for uploading the image
     Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/selfie');
 
-    // Create a multipart request
     var request = http.MultipartRequest('POST', url);
 
-    // Add the image file to the request
     var fileStream = http.ByteStream(imageFile.openRead());
     var length = await imageFile.length();
     var multipartFile =
         http.MultipartFile('image', fileStream, length, filename: 'image.jpg');
     request.files.add(multipartFile);
 
-    // Set the bearer token in the authorization header
     request.headers['Authorization'] = 'Bearer $token';
 
-    // Send the request
     var response = await http.Response.fromStream(await request.send());
 
-    // Handle the response
     if (response.statusCode == 200) {
-      // Successful upload
       final json = jsonDecode(response.body);
       final data = (json)['imageUrl'].toString();
       debugPrint(data);
@@ -79,7 +72,6 @@ class PreviewDetailsState extends State<PreviewDetails> {
         token,
       );
     } else {
-      // Handle error
       debugPrint('Failed to upload image: ${response.statusCode}');
       showMessage(title: "Failed to upload image", message: response.body);
     }
@@ -90,28 +82,21 @@ class PreviewDetailsState extends State<PreviewDetails> {
     String facePhoto,
     String token,
   ) async {
-    // Define the endpoint URL for uploading the image
     Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/valid-id');
 
-    // Create a multipart request
     var request = http.MultipartRequest('POST', url);
 
-    // Add the image file to the request
     var fileStream = http.ByteStream(imageFile.openRead());
     var length = await imageFile.length();
     var multipartFile =
         http.MultipartFile('image', fileStream, length, filename: 'image.jpg');
     request.files.add(multipartFile);
 
-    // Set the bearer token in the authorization header
     request.headers['Authorization'] = 'Bearer $token';
 
-    // Send the request
     var response = await http.Response.fromStream(await request.send());
 
-    // Handle the response
     if (response.statusCode == 200) {
-      // Successful upload
       final json = jsonDecode(response.body);
       final data = (json)['imageUrl'].toString();
       debugPrint(data);
@@ -121,38 +106,9 @@ class PreviewDetailsState extends State<PreviewDetails> {
         data,
       );
     } else {
-      // Handle error
       debugPrint('Failed to upload image: ${response.statusCode}');
       showMessage(title: "Failed to upload image", message: response.body);
     }
-  }
-
-  Future<void> deleteUserDataOnly(context) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.remove('user_data');
-    getProfile(userToken!, context);
-  }
-
-  Future<void> getUserDataOnly() async {
-    final prefs = await SharedPreferences.getInstance();
-    token = prefs.getString('user_token');
-    final userData = prefs.getString('user_data');
-    if (userData != null) {
-      userData0 = [jsonDecode(userData)];
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => ForReview(userData: userData0!)));
-    } else {
-      debugPrint('User data not found');
-    }
-    setState(() {});
-  }
-
-  Future<void> saveUserDataOnly(Map<String, dynamic> userData) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', jsonEncode(userData));
-    getUserDataOnly();
   }
 
   Future<void> handleVerify(token, facePhoto, idPhoto) async {
@@ -168,19 +124,6 @@ class PreviewDetailsState extends State<PreviewDetails> {
         idPhoto!,
         facePhoto,
         context);
-  }
-
-  Future<void> getProfile(String token, context) async {
-    final response = await http.get(
-      Uri.parse('https://loyaltylinx.cyclic.app/api/user/profile'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      saveUserDataOnly(json['userProfile']);
-    } else {}
   }
 
   Future accountVerify(
@@ -217,14 +160,36 @@ class PreviewDetailsState extends State<PreviewDetails> {
       }),
     );
     if (response.statusCode == 200) {
-      deleteUserDataOnly(context);
-      // getProfile(userToken!, context);
+      getProfile(tokenMain!, context);
     } else {
       final json = jsonDecode(response.body);
       Navigator.of(context, rootNavigator: true).pop();
       final message = json['message'];
       await showMessage(title: "Failed to verify", message: message);
     }
+  }
+
+  Future<void> getProfile(String token, context) async {
+    final response = await http.get(
+      Uri.parse('https://loyaltylinx.cyclic.app/api/user/profile'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final data = json['userProfile'];
+      if (data != null) {
+        setState(() {
+          userData1 = [json['userProfile']];
+        });
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    ForReview(userData: [json['userProfile']])));
+      }
+    } else {}
   }
 
   @override
@@ -333,23 +298,13 @@ class PreviewDetailsState extends State<PreviewDetails> {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width / 2.5,
-                        height: 60.0,
+                        height: 40.0,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Navigator.pushReplacement(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //         builder: (context) => const ForReview()));
-                            // print(widget.facePhotoUrl);
-                            // print(widget.address);
-                            // print(widget.birthDate);
-                            // print(widget.facePhoto);
-                            // print(widget.gender);
-                            // print(widget.idPhoto);
-                            // print(widget.municipal);
-                            // print(widget.postalCode);
-                            // print(widget.province);
-                            // print(widget.typeId);
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const AddForm()));
                           },
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
@@ -367,7 +322,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
                       ),
                       SizedBox(
                         width: MediaQuery.of(context).size.width / 2.5,
-                        height: 60.0,
+                        height: 40.0,
                         child: ElevatedButton(
                           onPressed: () async {
                             showDialog(
@@ -377,9 +332,17 @@ class PreviewDetailsState extends State<PreviewDetails> {
                                 context: context,
                                 builder: (context) {
                                   return const Center(
-                                      child: CircularProgressIndicator());
+                                      child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(),
+                                      Text("Please wait...")
+                                    ],
+                                  ));
                                 });
-                            uploadFileFacePhoto(widget.facePhoto!, userToken!);
+                            uploadFileFacePhoto(widget.facePhoto!, tokenMain!);
                             // uploadFileIdPhoto(widget.idPhoto!, userToken!);
                             // handleVerify(userToken!);
                           },
@@ -391,7 +354,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
                                 fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           child: const Text(
-                            "Verify!",
+                            "Submit",
                             style:
                                 TextStyle(fontSize: 14.0, color: Colors.white),
                           ),
@@ -454,7 +417,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
 }
 
 class ForReview extends StatefulWidget {
-  final List<Object> userData;
+  final List<dynamic> userData;
   const ForReview({super.key, required this.userData});
 
   @override
@@ -478,6 +441,9 @@ class _ForReviewState extends State<ForReview> {
                   builder: (context) {
                     return const Center(child: CircularProgressIndicator());
                   });
+              setState(() {
+                status = widget.userData[0]['verification']['status'];
+              });
               Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(

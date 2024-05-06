@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:loyaltylinx/main.dart';
 import 'package:loyaltylinx/pages/auth/login.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:loyaltylinx/pages/veiws/profile.dart';
@@ -15,17 +16,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 const apiUrlValidateVerify =
-    "https://loyaltylinx.cyclic.app/api/user/validate-code-with-token";
+    "https://loyaltylinx.cyclic.app/api/user/validate-code-login";
 
 String userCode = '';
 
 class Authorization extends StatefulWidget {
   final List<CameraDescription>? cameras;
   final String code;
+  final String sendVia;
+
   const Authorization({
     super.key,
     this.cameras,
     required this.code,
+    required this.sendVia,
   });
 
   @override
@@ -36,6 +40,26 @@ class Authorization extends StatefulWidget {
 class _AuthorizationState extends State<Authorization> {
   final _formKey = GlobalKey<FormState>();
 
+  Future<void> refreshCode(String apiRefreshCode, String token, context) async {
+    var url = Uri.parse(apiRefreshCode);
+    var response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      // print(json);
+    } else {
+      Navigator.of(context, rootNavigator: true).pop();
+      final json = jsonDecode(response.body);
+      // print(json);
+    }
+  }
+
   bool clear = false;
 
   @override
@@ -45,7 +69,7 @@ class _AuthorizationState extends State<Authorization> {
 
   @override
   Widget build(BuildContext context) {
-    Future<void> validate(code, context) async {
+    Future<void> validate(value, context) async {
       showDialog(
           barrierColor: Theme.of(context).colorScheme.background,
           barrierDismissible: false,
@@ -53,18 +77,21 @@ class _AuthorizationState extends State<Authorization> {
           builder: (context) {
             return const Center(child: CircularProgressIndicator());
           });
-      var url = Uri.parse(apiUrlValidateVerify);
+      var url = Uri.parse(
+          'https://loyaltylinx.cyclic.app/api/user/validate-code-with-token');
       var response = await http.post(url,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $userToken',
+            'Authorization': 'Bearer $tokenMain',
           },
-          body: jsonEncode({"secretCode": code}));
+          body: jsonEncode({"secretCode": value}));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final message = json['message'];
-        userCode = code;
+        setState(() {
+          userCode = value;
+        });
         Navigator.pushReplacement(context, routeTransition(const AddForm()));
       } else {
         Navigator.of(context, rootNavigator: true).pop();
@@ -93,12 +120,12 @@ class _AuthorizationState extends State<Authorization> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              Text('We sent code via to',
+              Text('We sent code via MobileNo to',
                   style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.secondary,
                       fontWeight: FontWeight.w500)),
-              Text("jester@gmail.com",
+              Text(widget.sendVia,
                   style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue.shade400,
@@ -131,8 +158,11 @@ class _AuthorizationState extends State<Authorization> {
                   ),
                 ),
                 onPressed: () {
-                  // print(userToken)
-                  print(widget.code);
+                  // print(widget.code);
+                  refreshCode(
+                      'https://loyaltylinx.cyclic.app/api/user/refresh-code',
+                      tokenMain!,
+                      context);
                 },
                 child: const Text(
                   'Resend',

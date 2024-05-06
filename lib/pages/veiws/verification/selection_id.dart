@@ -42,6 +42,7 @@ String? postalCode;
 String? address;
 String? imagePath;
 String? selecteID;
+bool _isFlashOn = false;
 
 class _SelectionIdState extends State<SelectionId> {
   late CameraController controller;
@@ -256,11 +257,7 @@ void showCameraModal(BuildContext context) {
           minChildSize: 0.3,
           maxChildSize: 1,
           builder: (BuildContext context, ScrollController scrollController) {
-            return const ClipRRect(
-                // borderRadius: BorderRadius.only(
-                //     topLeft: Radius.circular(30),
-                //     topRight: Radius.circular(30)),
-                child: CameraView());
+            return const ClipRRect(child: CameraView());
           });
     },
   );
@@ -274,38 +271,6 @@ class ImagePreview extends StatefulWidget {
 }
 
 class _ImagePreviewState extends State<ImagePreview> {
-  // Future<void> uploadFile(File imageFile, String token) async {
-  //   // Define the endpoint URL for uploading the image
-  //   Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/valid-id');
-
-  //   // Create a multipart request
-  //   var request = http.MultipartRequest('POST', url);
-
-  //   // Add the image file to the request
-  //   var fileStream = http.ByteStream(imageFile.openRead());
-  //   var length = await imageFile.length();
-  //   var multipartFile =
-  //       http.MultipartFile('image', fileStream, length, filename: 'image.jpg');
-  //   request.files.add(multipartFile);
-
-  //   // Set the bearer token in the authorization header
-  //   request.headers['Authorization'] = 'Bearer $token';
-
-  //   // Send the request
-  //   var response = await http.Response.fromStream(await request.send());
-
-  //   // Handle the response
-  //   if (response.statusCode == 200) {
-  //     // Successful upload
-  //     final json = jsonDecode(response.body);
-  //     final urlId = (json)['imageUrl'].toString();
-  //     // urlValidId = urlId;
-  //   } else {
-  //     // Handle error
-  //     print('Failed to upload image: ${response.statusCode}');
-  //   }
-  // }
-
   void deleteImage() async {
     Navigator.pop(context);
     Future.delayed(const Duration(seconds: 3));
@@ -482,6 +447,17 @@ class _CameraViewState extends State<CameraView> {
     }
   }
 
+  void _toggleFlash() {
+    setState(() {
+      _isFlashOn = !_isFlashOn;
+      if (_isFlashOn) {
+        _controller.setFlashMode(FlashMode.torch);
+      } else {
+        _controller.setFlashMode(FlashMode.off);
+      }
+    });
+  }
+
   late CameraController _controller;
   late Future<void> _initializeCameraFuture;
 
@@ -519,6 +495,18 @@ class _CameraViewState extends State<CameraView> {
           return Scaffold(
             appBar: AppBar(
               backgroundColor: Theme.of(context).colorScheme.background,
+              actions: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                      onPressed: () {
+                        _toggleFlash();
+                      },
+                      icon: _isFlashOn == true
+                          ? const Icon(Icons.flash_on)
+                          : const Icon(Icons.flash_off)),
+                )
+              ],
             ),
             body: Stack(
               children: [
@@ -541,7 +529,7 @@ class _CameraViewState extends State<CameraView> {
                               height: 10,
                             ),
                             Text(
-                              "Place the ID within the frame",
+                              "Place the front of ID within the frame",
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),

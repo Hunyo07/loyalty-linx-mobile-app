@@ -1,11 +1,19 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:developer';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/main.dart';
+import 'package:loyaltylinx/pages/veiws/navbottom.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class MyQrPage extends StatefulWidget {
   const MyQrPage({super.key});
@@ -14,10 +22,33 @@ class MyQrPage extends StatefulWidget {
   State<MyQrPage> createState() => _MyQrPageState();
 }
 
+String? qrCodeNum;
+
 class _MyQrPageState extends State<MyQrPage> {
   QRViewController? controller;
+
+  final screenshotController = ScreenshotController();
+
+  Future<void> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('user_token');
+
+    if (data != null) {
+      final json = jsonDecode(data);
+      setState(() {
+        qrCodeNum = json['userId'] + userData1[0]['qrCode'];
+      });
+    }
+  }
+
   Barcode? result;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+
+  @override
+  void initState() {
+    getUserId();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,154 +57,140 @@ class _MyQrPageState extends State<MyQrPage> {
     );
   }
 
+  Future<void> refreshCodeQr(
+      String apiRefreshCode, String token, context) async {
+    var url = Uri.parse(apiRefreshCode);
+    var response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      // final message = json['message'];
+      setState(() {
+        qrCodeNum = json['qrCode'];
+      });
+    } else {
+      final json = jsonDecode(response.body);
+      final message = json['message'];
+      await showMessage(title: "Failed to generate qr", message: message);
+    }
+  }
+
   Widget _buildBody(context) {
+    Brightness brightness = Theme.of(context).brightness;
+    bool isDark = brightness == Brightness.dark;
     return Column(
       children: <Widget>[
-        Stack(alignment: Alignment.center, children: [
-          SizedBox(
-              height: MediaQuery.of(context).size.height / 1.112,
-              child: Center(child: _buildQrView(context))),
-          Positioned(
-            bottom: 100,
-            child: FittedBox(
-              fit: BoxFit.contain,
+        SizedBox(
+            height: MediaQuery.of(context).size.height / 2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  if (result != null)
-                    Text(
-                        'Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}')
-                  else
-                    const Text('Scan a code'),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                backgroundColor: Colors.transparent),
-                            onPressed: () async {
-                              await controller?.toggleFlash();
-                              setState(() {});
-                            },
-                            child: FutureBuilder(
-                              future: controller?.getFlashStatus(),
-                              builder: (context, snapshot) {
-                                return Icon(snapshot.data == false
-                                    ? CupertinoIcons.lightbulb
-                                    : CupertinoIcons.lightbulb_fill);
-                              },
-                            )),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                backgroundColor: Colors.transparent),
-                            onPressed: () async {
-                              await controller?.flipCamera();
-                              setState(() {});
-                            },
-                            child: FutureBuilder(
-                              future: controller?.getCameraInfo(),
-                              builder: (context, snapshot) {
-                                if (snapshot.data != null) {
-                                  return Icon(
-                                      describeEnum(snapshot.data!) == "back"
-                                          ? CupertinoIcons.camera_rotate
-                                          : CupertinoIcons.camera_rotate_fill);
-                                } else {
-                                  return const Text('loading');
-                                }
-                              },
-                            )),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                backgroundColor: Colors.transparent),
-                            onPressed: () async {
-                              await controller?.pauseCamera();
-                            },
-                            child: const Icon(Icons.add_box_outlined)
-                            // const Text('pause',
-                            //     style: TextStyle(fontSize: 20)),
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white
+                              : const Color.fromARGB(255, 0, 12, 30),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Column(
+                        children: [
+                          Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(10),
+                            child: Screenshot(
+                              controller: screenshotController,
+                              child: QrImageView(size: 300, data: '$qrCodeNum'),
                             ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.all(8),
-                        child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                backgroundColor: Colors.transparent),
-                            onPressed: () async {
-                              await controller?.resumeCamera();
-                            },
-                            child: const Icon(Icons.file_upload_outlined)
-                            //  const Text('resume',
-                            //     style: TextStyle(fontSize: 20)),
-                            ),
-                      )
-                    ],
-                  ),
+                          ),
+                        ],
+                      )),
                 ],
               ),
-            ),
-          )
-        ]),
+            )),
+        FittedBox(
+          fit: BoxFit.contain,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: isDark
+                                ? Colors.white
+                                : const Color.fromARGB(255, 0, 12, 30)),
+                        onPressed: () async {
+                          final directory = await getExternalStorageDirectory();
+                          final imagePath = '${directory!.path}/qr_code.png';
+                          final imageFile = File(imagePath);
+                          final imageBytes =
+                              await screenshotController.capture();
+                          await imageFile.writeAsBytes(imageBytes!);
+                          await ImageGallerySaver.saveImage(imageBytes);
+                        },
+                        child: Icon(
+                          Icons.save_alt,
+                          color: !isDark ? Colors.white : Colors.black,
+                        )),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: isDark
+                                ? Colors.white
+                                : const Color.fromARGB(255, 0, 12, 30)),
+                        onPressed: () async {
+                          debugPrint("Generate");
+                          refreshCodeQr(
+                              'https://loyaltylinx.cyclic.app/api/user/refresh-qr',
+                              tokenMain!,
+                              context);
+                        },
+                        child: Icon(
+                          Icons.qr_code_scanner_sharp,
+                          color: !isDark ? Colors.white : Colors.black,
+                        )),
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildQrView(BuildContext context) {
-    var scanArea = (MediaQuery.of(context).size.width < 200 ||
-            MediaQuery.of(context).size.height < 200)
-        ? 150.0
-        : 300.0;
-    return QRView(
-      key: qrKey,
-      onQRViewCreated: _onQRViewCreated,
-      overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: scanArea,
-          cutOutBottomOffset: 100),
-      onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
-    );
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
-    controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        result = scanData;
-      });
-    });
-  }
-
-  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
-    log('${DateTime.now().toIso8601String()}_onPermissionSet $p');
-    if (!p) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('no Permission')),
-      );
-    }
+  showMessage({required String title, required String message}) {
+    showCupertinoDialog(
+        context: context,
+        builder: (contex) {
+          return CupertinoAlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("ok"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        });
   }
 
   @override

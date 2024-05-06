@@ -5,13 +5,15 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:loyaltylinx/main.dart';
 import 'package:loyaltylinx/pages/auth/forget_password.dart';
-import 'package:loyaltylinx/pages/auth/verfication.dart';
+import 'package:loyaltylinx/pages/auth/otp_verification.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? mobileNo;
+  const LoginPage({super.key, this.mobileNo});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -54,15 +56,13 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    Future<void> saveUserData(
-        Map<String, dynamic> userData, Map<String, dynamic> userToken) async {
+    Future<void> saveUserData(Map<String, dynamic> objectToken) async {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', jsonEncode(userData));
-      await prefs.setString('user_token', jsonEncode(userToken));
+      await prefs.setString('user_token', jsonEncode(objectToken));
     }
 
     Future<void> getProfile(
-        String token, Map<String, dynamic> object, context) async {
+        String token, Map<String, dynamic> objectToken, context) async {
       final response = await http.get(
         Uri.parse(apiUrlProfile),
         headers: {
@@ -73,27 +73,16 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         final userData = json['userProfile'];
-        final firstTimeLogin = json['userProfile']['isFirstTimeLogin'];
-        final mobileNo = json['userProfile']['mobileNo'];
-        if (firstTimeLogin != true) {
-          Navigator.of(context).pushAndRemoveUntil(
-              routeTransition(BottomNavBarExample(userData: [userData])),
-              (Route<dynamic> route) => false);
-          print(json['userProfile']);
-          saveUserData(json['userProfile'], object);
-        } else {
-          Navigator.of(context).pushAndRemoveUntil(
-              routeTransition(Verification(
-                  email: _emailController.text.toString(),
-                  mobileNo: mobileNo,
-                  passWord: _passwordController.text.toString(),
-                  apiUrlLogin: apiUrlLogin,
-                  apiUrlValidate: apiUrlValidate)),
-              (Route<dynamic> route) => false);
-        }
+        userData0 = [userData];
+        tokenMain = objectToken['token'];
+        saveUserData(objectToken);
+        Navigator.of(context).pushAndRemoveUntil(
+            routeTransition(BottomNavBarExample(userData: [userData])),
+            (Route<dynamic> route) => false);
       } else {
         final json = jsonDecode(response.body);
         final message = json['message'];
+        print(json);
         await showMessage(title: "Failed to login", message: message);
       }
     }
@@ -106,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context) {
             return const Center(child: CircularProgressIndicator());
           });
-      onLoad = false;
+      onLoad = true;
       final response = await http.post(
         Uri.parse(apiUrlLogin),
         headers: {'Content-Type': 'application/json'},
@@ -114,14 +103,25 @@ class _LoginPageState extends State<LoginPage> {
             {'email': username, 'password': password, 'role': "user"}),
       );
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final token = json['token'];
-        getProfile(token, json, context);
+        final jsonToken = jsonDecode(response.body);
+        final token = jsonToken['token'];
+        final isFirtTimeLogin = jsonToken['isFirstTimeLogin'];
+        if (isFirtTimeLogin != true) {
+          getProfile(token, jsonToken, context);
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(
+              routeTransition(OtpVerification(
+                  token: jsonToken,
+                  sendMethod: "Mobile No",
+                  apiUrlValidate: apiUrlValidate)),
+              (Route<dynamic> route) => false);
+        }
       } else {
+        // final json = jsonDecode(response.body);
+        print(response.body);
+        // final message = json['message'];
+        // await showMessage(title: "Failed to login", message: message);
         Navigator.of(context, rootNavigator: true).pop();
-        final json = jsonDecode(response.body);
-        final message = json['message'];
-        await showMessage(title: "Failed to login", message: message);
       }
     }
 
@@ -150,6 +150,9 @@ class _LoginPageState extends State<LoginPage> {
                   ]),
                   // IntlPhoneField
                   TextFormField(
+                    onTapOutside: (event) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
                     controller: _emailController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -173,6 +176,9 @@ class _LoginPageState extends State<LoginPage> {
                     height: 16,
                   ),
                   TextFormField(
+                    onTapOutside: (event) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
                     controller: _passwordController,
                     onChanged: (pass) {},
                     validator: (value) {
@@ -237,18 +243,21 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(3)),
                       elevation: 5,
                     ),
-                    onPressed: onLoad == !true
-                        ? null
-                        : () async {
-                            if (_formKey.currentState!.validate()) {
-                              login(_emailController.text.toString(),
-                                  _passwordController.text.toString(), context);
-                            } else {
-                              setState(() {
-                                onLoad == false;
-                              });
-                            }
-                          },
+                    onPressed:
+                        // onLoad == true
+                        //     ? null
+                        //     :
+
+                        () async {
+                      if (_formKey.currentState!.validate()) {
+                        login(_emailController.text.toString(),
+                            _passwordController.text.toString(), context);
+                      } else {
+                        setState(() {
+                          onLoad == false;
+                        });
+                      }
+                    },
                     child: const SizedBox(
                       height: 30,
                       child: Text(
@@ -265,6 +274,14 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.clear();
+    _passwordController.clear();
+    _obscureText = true;
+    super.dispose();
   }
 
   // ignore: non_constant_identifier_names

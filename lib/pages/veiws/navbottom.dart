@@ -7,24 +7,22 @@ import 'package:loyaltylinx/pages/veiws/myqr.dart';
 import 'package:loyaltylinx/pages/veiws/rewards.dart';
 import 'package:loyaltylinx/pages/veiws/profile.dart';
 
+List userData1 = [];
+String? profile;
+
 class BottomNavBarExample extends StatefulWidget {
-  final List<Object> userData;
+  final List<dynamic> userData;
 
   const BottomNavBarExample({super.key, required this.userData});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _BottomNavBarExampleState createState() => _BottomNavBarExampleState();
+  State<BottomNavBarExample> createState() => _BottomNavBarExampleState();
 }
-
-List userData1 = [];
-String profile = "";
 
 class _BottomNavBarExampleState extends State<BottomNavBarExample> {
   @override
   Widget build(BuildContext context) {
     userData1 = widget.userData;
-    profile = userData1[0]["profilePicture"];
     return Scaffold(
       appBar: homeAppBar(),
       body: _buildPageView(),
@@ -32,6 +30,16 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
       floatingActionButton: newMethod(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
+  }
+
+  @override
+  void initState() {
+    setState(() {
+      userData1 = widget.userData;
+      profile = userData1[0]["profilePicture"];
+    });
+    _pageController = PageController(initialPage: _currentIndex);
+    super.initState();
   }
 
   SizedBox newMethod() {
@@ -70,16 +78,9 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
     const HomePage(),
     const RewardsPage(),
     const CreditPage(),
-    ProfilePage(
-      userData: [userData1],
-    ),
+    const ProfilePage(),
   ];
   late PageController _pageController;
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: _currentIndex);
-  }
 
   ClipRRect _buildBottomNavBar() {
     Brightness brightness = Theme.of(context).brightness;
@@ -208,7 +209,7 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
                         width: MediaQuery.of(context).size.width * .09,
                         height: MediaQuery.of(context).size.height * .09,
                         child: Image.network(
-                          profile,
+                          profile!,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -264,7 +265,7 @@ void showQRCodeModal(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return DraggableScrollableSheet(
-          initialChildSize: 0.90,
+          initialChildSize: 0.60,
           minChildSize: 0.3,
           maxChildSize: 1,
           builder: (BuildContext context, ScrollController scrollController) {

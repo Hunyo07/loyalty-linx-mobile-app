@@ -1,10 +1,16 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:currency_formatter/currency_formatter.dart';
+import 'package:loyaltylinx/main.dart';
+import 'package:loyaltylinx/pages/veiws/home/apply_credit_merch.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
+import 'package:loyaltylinx/pages/veiws/verification/otp_send_method.dart';
+import 'package:http/http.dart' as http;
 
 String user = "John paul";
 const CurrencyFormat phpSettings = CurrencyFormat(
@@ -66,7 +72,7 @@ class HomePage extends StatelessWidget {
   Widget _buildBody() {
     // Add ytiour body content here.
 
-    return MyBodyWidget();
+    return const MyBodyWidget();
   }
 }
 
@@ -165,15 +171,137 @@ final List<Map<String, Object>> _spendings = [
 
 double seeAll = 1.5;
 
-class MyBodyWidget extends StatelessWidget {
-  MyBodyWidget({
+class MyBodyWidget extends StatefulWidget {
+  const MyBodyWidget({
     super.key,
   });
 
-  final isVerified = userData1[0]['verification']['isVerified'];
+  @override
+  State<MyBodyWidget> createState() => _MyBodyWidgetState();
+}
+
+class _MyBodyWidgetState extends State<MyBodyWidget> {
+  String? statusHome;
+  String? code;
+
+  @override
+  void initState() {
+    statusHome = userData1[0]['verification']['status'];
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
+    Future<void> getMerchantsList(context) async {
+      var url =
+          Uri.parse('https://loyaltylinx.cyclic.app/api/merchant/get-all');
+      var response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $tokenMain',
+        },
+      );
+      if (response.statusCode == 200) {
+        final json = (jsonDecode(response.body)['merchants'] as List)
+            .map((dynamic e) => e as Map<String, dynamic>)
+            .toList();
+        Navigator.of(context).push(
+          routeTransition(ApplyCredit(
+            merchants: json,
+          )),
+        );
+      } else {
+        print("faield");
+      }
+    }
+
+    Future<void> refreshCode(
+        String apiRefreshCode, String token, context) async {
+      var url = Uri.parse(apiRefreshCode);
+      var response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        code = json['secretCode'];
+
+        Navigator.pushReplacement(context,
+            routeTransition(ApplyCreditOtp(userCode: json['secretCode']!)));
+      } else {
+        Navigator.of(context, rootNavigator: true).pop();
+        final json = jsonDecode(response.body);
+        print(json);
+      }
+    }
+
+    Future<void> handleToSendOtp() async {
+      Navigator.pop(context);
+      showDialog(
+          barrierColor: Theme.of(context).colorScheme.background,
+          barrierDismissible: false,
+          context: context,
+          builder: (context) {
+            return const Center(child: CircularProgressIndicator());
+          });
+      refreshCode('https://loyaltylinx.cyclic.app/api/user/refresh-code',
+          tokenMain!, context);
+    }
+
+    showMessage({required String title, required String message}) {
+      showCupertinoDialog(
+          context: context,
+          builder: (contex) {
+            return CupertinoAlertDialog(
+              title: Text(title),
+              content: Text(message),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text("No"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                CupertinoDialogAction(
+                  child: const Text("Yes"),
+                  onPressed: () async {
+                    handleToSendOtp();
+                    // refreshCode(
+                    //     'https://loyaltylinx.cyclic.app/api/user/refresh-code',
+                    //     tokenMain!,
+                    //     context);
+                    // Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
+    }
+
+    showMessagePending({required String title, required String message}) {
+      showCupertinoDialog(
+          context: context,
+          builder: (contex) {
+            return CupertinoAlertDialog(
+              title: Text(title),
+              content: Text(message),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text("Ok"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          });
+    }
+
     Brightness brightness = Theme.of(context).brightness;
     bool isDark = brightness == Brightness.dark;
 
@@ -277,18 +405,36 @@ class MyBodyWidget extends StatelessWidget {
                       buttons(
                           'assets/images/web_browser.png',
                           'assets/images/apply_light.png',
-                          isVerified != false
+                          statusHome == "new"
                               ? () {
-                                  print(userData1[0]['verification']
-                                      ['isVerified']);
+                                  showMessage(
+                                      title: 'Not verified yet',
+                                      message:
+                                          'You want to proceed to veirification?');
                                 }
-                              : null,
+                              : statusHome == 'pending'
+                                  ? () {
+                                      showMessagePending(
+                                          message:
+                                              "Your request for verification is on process",
+                                          title: "Review");
+                                    }
+                                  : statusHome == 'approve'
+                                      ? () async {
+                                          getMerchantsList(context);
+                                          print("Obejct");
+                                        }
+                                      : () {
+                                          showMessage(
+                                              title: 'Not verified yet',
+                                              message:
+                                                  'You want to proceed to veirification?');
+                                        },
                           "Apply credit"),
-                      buttons(
-                          'assets/images/payment.png',
-                          'assets/images/payment_method_light.png',
-                          () {},
-                          "Pay loan"),
+                      buttons('assets/images/payment.png',
+                          'assets/images/payment_method_light.png', () {
+                        print(userData1);
+                      }, "Pay loan"),
                       buttons(
                           'assets/images/monitor.png',
                           'assets/images/monitor_light.png',
@@ -474,6 +620,22 @@ class MyBodyWidget extends StatelessWidget {
           )
         ]),
       ),
+    );
+  }
+
+  PageRouteBuilder<dynamic> routeTransition(screenView) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => screenView,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
     );
   }
 

@@ -27,13 +27,16 @@ AppBar buildAppBar(context) {
   );
 }
 
+String? token;
 final _allViews = <Widget>[
   ImageBox(
       buttonText: "Become a merchant partner!",
       path: "assets/images/blackman.png",
       endorse:
           "Join us as a merchant partner and embark on a journey of growth and success together!",
-      onTap: () {},
+      onTap: () {
+        null;
+      },
       btnColor: Colors.blue.shade400),
   ImageBox(
       buttonText: "Register your business",

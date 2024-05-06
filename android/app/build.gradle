@@ -24,6 +24,7 @@ if (flutterVersionName == null) {
 }
 
 android {
+
     namespace "com.example.loyaltylinx"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
