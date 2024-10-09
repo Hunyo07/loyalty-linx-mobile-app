@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 const apiUrlValidateVerify =
-    "https://loyaltylinx.cyclic.app/api/user/validate-code-login";
+    "https://loyalty-linxapi.vercel.app/api/user/validate-code-login";
 
 String userCode = '';
 
@@ -40,6 +40,9 @@ class Authorization extends StatefulWidget {
 class _AuthorizationState extends State<Authorization> {
   final _formKey = GlobalKey<FormState>();
 
+  int _secondsRemaining = 300;
+  Timer? _timer;
+
   Future<void> refreshCode(String apiRefreshCode, String token, context) async {
     var url = Uri.parse(apiRefreshCode);
     var response = await http.post(
@@ -52,7 +55,7 @@ class _AuthorizationState extends State<Authorization> {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      // print(json);
+      sendOtp(widget.sendVia, context);
     } else {
       Navigator.of(context, rootNavigator: true).pop();
       final json = jsonDecode(response.body);
@@ -60,10 +63,46 @@ class _AuthorizationState extends State<Authorization> {
     }
   }
 
+  Future<void> sendOtp(mobileNo, context) async {
+    var url = Uri.parse('https://loyalty-linxapi.vercel.app/api/user/send-otp');
+    var response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $tokenMain',
+        },
+        body: jsonEncode({"number": mobileNo}));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Code successfully sent to ${widget.sendVia}')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Code failed to sent ${widget.sendVia}')));
+      Navigator.of(context, rootNavigator: true).pop();
+      final json = jsonDecode(response.body);
+      final message = json['message'];
+      await showMessage(title: "Failed to verify", message: message);
+    }
+  }
+
+  Future<void> _startTimer() async {
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        } else {
+          _timer?.cancel();
+        }
+      });
+    });
+  }
+
   bool clear = false;
 
   @override
   void initState() {
+    _startTimer();
     super.initState();
   }
 
@@ -78,7 +117,7 @@ class _AuthorizationState extends State<Authorization> {
             return const Center(child: CircularProgressIndicator());
           });
       var url = Uri.parse(
-          'https://loyaltylinx.cyclic.app/api/user/validate-code-with-token');
+          'https://loyalty-linxapi.vercel.app/api/user/validate-code-with-token');
       var response = await http.post(url,
           headers: {
             'Content-Type': 'application/json',
@@ -157,27 +196,42 @@ class _AuthorizationState extends State<Authorization> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                 ),
-                onPressed: () {
-                  // print(widget.code);
-                  refreshCode(
-                      'https://loyaltylinx.cyclic.app/api/user/refresh-code',
-                      tokenMain!,
-                      context);
-                },
-                child: const Text(
-                  'Resend',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
+                onPressed: _secondsRemaining > 0
+                    ? null
+                    : () {
+                        // print(widget.code);
+                        refreshCode(
+                            'https://loyalty-linxapi.vercel.app/api/user/refresh-code',
+                            tokenMain!,
+                            context);
+                        setState(() {
+                          _secondsRemaining = 180;
+                        });
+                        _startTimer();
+                      },
+                child: _secondsRemaining > 0
+                    ? Text(
+                        'Resend OTP in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}')
+                    : const Text(
+                        'Resend',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   showMessage({required String title, required String message}) {

@@ -1,19 +1,19 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously, avoid_print
 
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:loyaltylinx/main.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:screenshot/screenshot.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:screenshot/screenshot.dart';
 import 'package:http/http.dart' as http;
+import 'package:unicons/unicons.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:flutter/services.dart';
+import 'dart:typed_data';
+import '../../main.dart';
 
 class MyQrPage extends StatefulWidget {
   const MyQrPage({super.key});
@@ -27,26 +27,14 @@ String? qrCodeNum;
 class _MyQrPageState extends State<MyQrPage> {
   QRViewController? controller;
 
-  final screenshotController = ScreenshotController();
-
-  Future<void> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString('user_token');
-
-    if (data != null) {
-      final json = jsonDecode(data);
-      setState(() {
-        qrCodeNum = json['userId'] + userData1[0]['qrCode'];
-      });
-    }
-  }
+  // var screenshotController = ScreenshotController();
 
   Barcode? result;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
   @override
   void initState() {
-    getUserId();
+    qrCodeNum = userData1[0]['qrCode'];
     super.initState();
   }
 
@@ -81,13 +69,46 @@ class _MyQrPageState extends State<MyQrPage> {
     }
   }
 
+  // Future<void> _saveQRCodeToGallery(BuildContext context) async {
+  //   // showDialog(
+  //   //     barrierColor: Theme.of(context).colorScheme.background,
+  //   //     barrierDismissible: false,
+  //   //     context: context,
+  //   //     builder: (context) {
+  //   //       return const Center(child: CircularProgressIndicator());
+  //   //     });
+  //   try {
+  //     // Delay to ensure the QR code is fully rendered
+  //     await Future.delayed(const Duration(milliseconds: 200));
+  //     // Capture the QR code image
+  //     // Uint8List? imageBytes = await screenshotController.capture();
+
+  //     // Save the image to the gallery
+  //     final result = await ImageGallerySaver.saveImage(imageBytes!);
+  //     if (result['isSuccess']) {
+  //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+  //         content: Text('QR code saved to gallery'),
+  //       ));
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+  //         content: Text('Failed to save QR code to gallery'),
+  //       ));
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //       content: Text('Failed to save QR code: $e'),
+  //     ));
+  //   }
+  //   // Future.delayed(const Duration(seconds: 2), () {
+  //   //   Navigator.of(context, rootNavigator: true).pop();
+  //   // });
+  // }
+
   Widget _buildBody(context) {
-    Brightness brightness = Theme.of(context).brightness;
-    bool isDark = brightness == Brightness.dark;
     return Column(
       children: <Widget>[
         SizedBox(
-            height: MediaQuery.of(context).size.height / 2,
+            height: MediaQuery.of(context).size.height / 2.2,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
@@ -97,18 +118,17 @@ class _MyQrPageState extends State<MyQrPage> {
                   Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white
-                              : const Color.fromARGB(255, 0, 12, 30),
+                          color: Theme.of(context).colorScheme.inverseSurface,
                           borderRadius: BorderRadius.circular(10)),
                       child: Column(
                         children: [
+                          const Text("data"),
                           Container(
                             color: Colors.white,
-                            padding: const EdgeInsets.all(10),
-                            child: Screenshot(
-                              controller: screenshotController,
-                              child: QrImageView(size: 300, data: '$qrCodeNum'),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: QrImageView(
+                              data: '$qrCodeNum',
+                              version: QrVersions.auto,
                             ),
                           ),
                         ],
@@ -123,47 +143,57 @@ class _MyQrPageState extends State<MyQrPage> {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: isDark
-                                ? Colors.white
-                                : const Color.fromARGB(255, 0, 12, 30)),
-                        onPressed: () async {
-                          final directory = await getExternalStorageDirectory();
-                          final imagePath = '${directory!.path}/qr_code.png';
-                          final imageFile = File(imagePath);
-                          final imageBytes =
-                              await screenshotController.capture();
-                          await imageFile.writeAsBytes(imageBytes!);
-                          await ImageGallerySaver.saveImage(imageBytes);
-                        },
-                        child: Icon(
-                          Icons.save_alt,
-                          color: !isDark ? Colors.white : Colors.black,
-                        )),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Save image"),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.inverseSurface,
+                            ),
+                            onPressed: () async {
+                              // _saveQRCodeToGallery(context);
+                            },
+                            child: Icon(
+                              Icons.save_alt,
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                            )),
+                      ),
+                    ],
                   ),
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: isDark
-                                ? Colors.white
-                                : const Color.fromARGB(255, 0, 12, 30)),
-                        onPressed: () async {
-                          debugPrint("Generate");
-                          refreshCodeQr(
-                              'https://loyaltylinx.cyclic.app/api/user/refresh-qr',
-                              tokenMain!,
-                              context);
-                        },
-                        child: Icon(
-                          Icons.qr_code_scanner_sharp,
-                          color: !isDark ? Colors.white : Colors.black,
-                        )),
+                  const SizedBox(
+                    width: 12.0,
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Generate QR"),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.inverseSurface,
+                            ),
+                            onPressed: () async {
+                              refreshCodeQr(
+                                  'https://loyalty-linxapi.vercel.app/api/user/refresh-qr',
+                                  tokenMain!,
+                                  context);
+                            },
+                            child: Icon(
+                              UniconsLine.history_alt,
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                            )),
+                      ),
+                    ],
                   )
                 ],
               ),

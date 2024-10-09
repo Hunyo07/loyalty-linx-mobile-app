@@ -2,6 +2,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/pages/auth/create_acc_number.dart';
 import 'package:loyaltylinx/pages/auth/register.dart';
 import 'dart:async';
 
@@ -16,7 +17,26 @@ AppBar buildAppBar(context) {
   return AppBar(
     title: SizedBox(
       width: MediaQuery.of(context).size.width / 2,
-      child: Image.asset("assets/images/loyaltilinxicon.png"),
+      // child: Image.asset("assets/images/loyaltilinxicon.png"),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height / 22,
+            child: Image.asset('assets/images/splash.png'),
+          ),
+          const SizedBox(
+            width: 4,
+          ),
+          Text(
+            "Sample App",
+            style: TextStyle(
+                fontSize: 16,
+                color: Colors.amber.shade700,
+                fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     ),
     centerTitle: true,
     leading: null,
@@ -119,12 +139,37 @@ class _HomeViewState extends State<HomeView> {
                             )))))
           ]),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                   padding: const EdgeInsets.all(10),
-                  width: MediaQuery.of(context).size.width / 1.1,
-                  height: MediaQuery.of(context).size.width / 5,
+                  width: MediaQuery.of(context).size.width / 2,
+                  height: MediaQuery.of(context).size.height * .08,
+                  child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context, routeTransition(const NumberRegister()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primaryContainer,
+                          shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                  width: 2, color: Colors.amber.shade900),
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(3)))),
+                      child: FittedBox(
+                        child: Text(
+                          "SIGNUP",
+                          style: TextStyle(
+                              fontSize: 20, color: Colors.amber.shade900),
+                        ),
+                      ))),
+              Container(
+                  padding: const EdgeInsets.all(10),
+                  width: MediaQuery.of(context).size.width / 2,
+                  height: MediaQuery.of(context).size.height * .08,
                   child: ElevatedButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/login');
@@ -136,8 +181,8 @@ class _HomeViewState extends State<HomeView> {
                                   BorderRadius.all(Radius.circular(3)))),
                       child: const FittedBox(
                         child: Text(
-                          "Login",
-                          style: TextStyle(fontSize: 22, color: Colors.white),
+                          "LOGIN",
+                          style: TextStyle(fontSize: 20, color: Colors.white),
                         ),
                       ))),
             ],
@@ -194,23 +239,23 @@ class ImageBox extends StatelessWidget {
                 fit: BoxFit.fitHeight,
               )),
           const SizedBox(
-            height: 30,
+            height: 20,
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.width / 9,
-            child: ElevatedButton(
-                onPressed: () {
-                  onTap(context);
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: btnColor,
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(5)))),
-                child: Text(
-                  buttonText,
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
-                )),
-          ),
+          // SizedBox(
+          //   height: MediaQuery.of(context).size.width / 9,
+          //   child: ElevatedButton(
+          //       onPressed: () {
+          //         onTap(context);
+          //       },
+          //       style: ElevatedButton.styleFrom(
+          //           backgroundColor: btnColor,
+          //           shape: const RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.all(Radius.circular(5)))),
+          //       child: Text(
+          //         buttonText,
+          //         style: const TextStyle(fontSize: 16, color: Colors.white),
+          //       )),
+          // ),
           Center(
               child: Column(
             children: [

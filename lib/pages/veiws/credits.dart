@@ -1,6 +1,8 @@
 import 'package:currency_formatter/currency_formatter.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/main.dart';
+import 'package:loyaltylinx/pages/veiws/credits/credits_request.dart';
+import 'package:loyaltylinx/pages/veiws/home.dart';
 
 class CreditPage extends StatelessWidget {
   const CreditPage({super.key});
@@ -21,100 +23,26 @@ class CreditPage extends StatelessWidget {
 const CurrencyFormat phpSettings = CurrencyFormat(
   code: 'php',
   symbol: 'Php',
-  symbolSide: SymbolSide.left,
+  symbolSide: SymbolSide.none,
   thousandSeparator: ',',
   decimalSeparator: '.',
   symbolSeparator: ' ',
 );
-final List<Map<String, Object>> _loans = [
-  {
-    "description": "FOr the family",
-    "merhcant": "Loan",
-    "action": "Paid",
-    "date": "3 April 2024, 856 PM",
-    "amount": 1500.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Shop",
-    "action": "Buy",
-    "date": "5 April 2024, 856 PM",
-    "amount": 1502.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Hotel",
-    "action": "Paid",
-    "date": "3 April 2022, 856 PM",
-    "amount": 6000.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Travel",
-    "action": "Paid",
-    "date": "3 April 2024, 856 PM",
-    "amount": 150.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Travel",
-    "action": "Hotel",
-    "date": "3 April 2024, 856 PM",
-    "amount": 510.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Gift",
-    "action": "Receive",
-    "date": "3 April 2024, 856 PM",
-    "amount": 510.23,
-    "status": "add"
-  },
-  {
-    "merhcant": "Hotel",
-    "action": "Paid",
-    "date": "3 April 2024, 856 PM",
-    "amount": 510.23,
-    "status": "less"
-  },
-  {
-    "merhcant": "Hotel",
-    "action": "Rent",
-    "date": "3 April 2024, 856 PM",
-    "amount": 510.23,
-    "status": "add"
-  },
-  {
-    "merhcant": "Gift",
-    "action": "Recieve",
-    "date": "3 April 2024, 856 PM",
-    "amount": 510.23,
-    "status": "add"
-  },
-];
-
 final List<Map<String, Object>> mechants = [
-  {"merch": "Loans", "path": "assets/images/blackman.png"},
-  {"merch": "Offers", "path": "assets/images/women.png"},
-  {"merch": "Hotel", "path": "assets/images/whiteman.png"},
-  {"merch": "Shop", "path": "assets/images/women.png"},
-  {"merch": "invite", "path": "assets/images/whiteman.png"},
-  {"merch": "List", "path": "assets/images/women.png"},
-  {"merch": "Time", "path": "assets/images/blackman.png"},
-  {"merch": "Images", "path": "assets/images/whiteman.png"},
-  {"merch": "Friends", "path": "assets/images/women.png"},
-  {"merch": "Exact", "path": "assets/images/blackman.png"},
-  {"merch": "Secret", "path": "assets/images/whiteman.png"},
-  {"merch": "Favorites", "path": "assets/images/blackman.png"}
+  {"path": "assets/images/amazon.png"},
+  {"path": "assets/images/sm.png"},
+  {"path": "assets/images/mcdo.png"},
+  {"path": "assets/images/jollibee.png"},
+  {"path": "assets/images/walmart.png"},
+  {"path": "assets/images/super8.jpg"},
 ];
 
-const number = 2000.24;
+const number = 20000.24;
 
 String amountDue = CurrencyFormatter.format(number, phpSettings);
 
 class MyBodyWidget extends StatelessWidget {
   const MyBodyWidget({super.key});
-
   @override
   Widget build(BuildContext context) {
     Brightness brightness = Theme.of(context).brightness;
@@ -162,18 +90,6 @@ class MyBodyWidget extends StatelessWidget {
                       ),
                     ]),
                 FittedBox(
-                  child: Center(
-                    child: Text(
-                      "Amount Due",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                  ),
-                ),
-                FittedBox(
                   child: Container(
                       // height: MediaQuery.of(context).size.height * .04,
                       decoration: const BoxDecoration(
@@ -195,6 +111,18 @@ class MyBodyWidget extends StatelessWidget {
                         ),
                       )),
                 ),
+                FittedBox(
+                  child: Center(
+                    child: Text(
+                      "Available credits",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -209,7 +137,26 @@ class MyBodyWidget extends StatelessWidget {
           buttons(isDark, 'assets/images/payment.png',
               'assets/images/payment_method_light.png', () {}, "Pay"),
           buttons(isDark, 'assets/images/monitor.png',
-              'assets/images/monitor_light.png', () {}, "Status"),
+              'assets/images/monitor_light.png', () {
+            if (isVerified == true) {
+              final credits = userData0![0]['creditRequests']!;
+              if (credits.isNotEmpty) {
+                final creditRequestsList = (credits as List)
+                    .map((dynamic e) => e as Map<String, dynamic>)
+                    .toList();
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => CreditRequests(
+                            creditRequests: creditRequestsList)));
+              } else {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const EmptyCrediRequests()));
+              }
+            } else {}
+          }, "Request"),
           buttons(
             isDark,
             'assets/icons/history.png',
@@ -230,108 +177,124 @@ class MyBodyWidget extends StatelessWidget {
         child: const Row(
           children: [
             Text(
-              "Loans",
+              "Merchants",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
             ),
           ],
         ),
       ),
       const SizedBox(height: 8.0),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        width: MediaQuery.of(context).size.width / 1,
-        height: MediaQuery.of(context).size.width / 0.9,
-        child: ListView.builder(
-            itemCount: _loans.length,
+      // Container(
+      //   padding: const EdgeInsets.symmetric(horizontal: 15),
+      //   width: MediaQuery.of(context).size.width / 1,
+      //   height: MediaQuery.of(context).size.width / 0.9,
+      //   child: ListView.builder(
+      //       itemCount: _loans.length,
+      //       itemBuilder: (BuildContext context, int index) {
+      //         final action = _loans[index]['action'];
+      //         final date = _loans[index]['date'];
+      //         final amount = _loans[index]['amount'];
+      //         return Container(
+      //           padding: const EdgeInsets.symmetric(vertical: 5),
+      //           decoration:
+      //               BoxDecoration(borderRadius: BorderRadius.circular(2.0)),
+      //           child: InkWell(
+      //             splashColor: Colors.grey,
+      //             onTap: () {
+      //               // _showTransactionDetailsDialog(
+      //               //     context, merch, action, date, amount);
+      //             },
+      //             child: Column(
+      //               crossAxisAlignment: CrossAxisAlignment.start,
+      //               children: <Widget>[
+      //                 Container(
+      //                   padding: const EdgeInsets.all(5),
+      //                   height: MediaQuery.of(context).size.height * .10,
+      //                   decoration: BoxDecoration(
+      //                     boxShadow: [
+      //                       BoxShadow(
+      //                         color: Colors.black.withOpacity(0.1),
+      //                         blurRadius: 1,
+      //                         spreadRadius: 2,
+      //                         offset: const Offset(0, 1),
+      //                       )
+      //                     ],
+      //                     borderRadius: BorderRadius.circular(10),
+      //                     color: Theme.of(context).colorScheme.primaryContainer,
+      //                   ),
+      //                   child: Row(
+      //                     children: [
+      //                       const Icon(
+      //                         Icons.shopping_bag_outlined,
+      //                         size: 40,
+      //                       ),
+      //                       Column(
+      //                         mainAxisAlignment: MainAxisAlignment.center,
+      //                         crossAxisAlignment: CrossAxisAlignment.start,
+      //                         children: [
+      //                           Container(
+      //                               padding: const EdgeInsets.all(3),
+      //                               child: Text(
+      //                                 ' $action',
+      //                                 style: const TextStyle(
+      //                                     fontWeight: FontWeight.w600,
+      //                                     fontSize: 18),
+      //                               )),
+      //                           Container(
+      //                               padding: const EdgeInsets.all(3),
+      //                               child: Text(
+      //                                 ' $date',
+      //                                 style: const TextStyle(),
+      //                               )),
+      //                         ],
+      //                       ),
+      //                       const Spacer(),
+      //                       Row(
+      //                         children: [
+      //                           Icon(
+      //                             _loans[index]['status'] == 'add'
+      //                                 ? CupertinoIcons.add
+      //                                 : CupertinoIcons.minus,
+      //                             size: 12,
+      //                             color: _loans[index]['status'] == 'add'
+      //                                 ? Colors.green
+      //                                 : Colors.red,
+      //                           ),
+      //                           Text("$amount",
+      //                               style: TextStyle(
+      //                                   color: _loans[index]['status'] == 'add'
+      //                                       ? Colors.green
+      //                                       : Colors.red,
+      //                                   fontWeight: FontWeight.bold,
+      //                                   fontSize: 12)),
+      //                         ],
+      //                       ),
+      //                     ],
+      //                   ),
+      //                 )
+      //               ],
+      //             ),
+      //           ),
+      //           // .addOnLongPress(() => _deleteTransaction(context, index));
+      //         );
+      //       }),
+      // ),
+      Padding(
+          padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 16.0,
+              crossAxisSpacing: 16.0,
+            ),
+            physics: const ClampingScrollPhysics(),
+            itemCount: mechants.length,
             itemBuilder: (BuildContext context, int index) {
-              final action = _loans[index]['action'];
-              final date = _loans[index]['date'];
-              final amount = _loans[index]['amount'];
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(2.0)),
-                child: InkWell(
-                  splashColor: Colors.grey,
-                  onTap: () {
-                    // _showTransactionDetailsDialog(
-                    //     context, merch, action, date, amount);
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        height: MediaQuery.of(context).size.height * .10,
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 1,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 1),
-                            )
-                          ],
-                          borderRadius: BorderRadius.circular(10),
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.shopping_bag_outlined,
-                              size: 40,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                    padding: const EdgeInsets.all(3),
-                                    child: Text(
-                                      ' $action',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 18),
-                                    )),
-                                Container(
-                                    padding: const EdgeInsets.all(3),
-                                    child: Text(
-                                      ' $date',
-                                      style: const TextStyle(),
-                                    )),
-                              ],
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                Icon(
-                                  _loans[index]['status'] == 'add'
-                                      ? CupertinoIcons.add
-                                      : CupertinoIcons.minus,
-                                  size: 12,
-                                  color: _loans[index]['status'] == 'add'
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                                Text("$amount",
-                                    style: TextStyle(
-                                        color: _loans[index]['status'] == 'add'
-                                            ? Colors.green
-                                            : Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                // .addOnLongPress(() => _deleteTransaction(context, index));
-              );
-            }),
-      ),
+              final path = mechants[index]["path"];
+              return merchant(context, path, () {});
+            },
+          )),
     ]));
   }
 
@@ -339,6 +302,7 @@ class MyBodyWidget extends StatelessWidget {
     return SizedBox(
       width: 64,
       child: InkWell(
+          borderRadius: BorderRadius.circular(10),
           onTap: () {
             onPress();
           },
@@ -363,34 +327,20 @@ class MyBodyWidget extends StatelessWidget {
     );
   }
 
-  InkWell merchant(BuildContext context, path, text, onTap) {
+  InkWell merchant(BuildContext context, path, onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
           width: MediaQuery.of(context).size.width * .16,
           decoration: BoxDecoration(
-              color: Colors.amber.shade900,
+              color: Colors.white,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
               image: DecorationImage(
                   image: AssetImage(path), fit: BoxFit.scaleDown)),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FittedBox(
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-                  decoration: const BoxDecoration(color: Colors.black26),
-                  child: Text(
-                    text,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            children: [],
           )),
     );
   }

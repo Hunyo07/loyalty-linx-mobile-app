@@ -52,7 +52,7 @@ Future<List<SelectedListItem>> fetchData() async {
 bool isGender = false;
 
 Future<List<SelectedListItem>> fetchDataCity(String provinceCode) async {
-  if (provinceCode != null) {
+  if (provinceCode != null || provinceCode.isNotEmpty) {
     final response = await http.get(Uri.parse(
         'https://psgc.cloud/api/provinces/$provinceCode/cities-municipalities'));
     if (response.statusCode == 200) {
@@ -424,6 +424,7 @@ class _AddFormState extends State<AddForm> {
   @override
   void dispose() {
     super.dispose();
+    selectedProvince = null;
     _provinceTextEditingController.clear();
     _addressController.clear();
     _postalController.clear();

@@ -3,9 +3,12 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+// import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loyaltylinx/main.dart';
+import 'package:loyaltylinx/pages/auth/create_acc_number.dart';
 import 'package:loyaltylinx/pages/auth/forget_password.dart';
 import 'package:loyaltylinx/pages/auth/otp_verification.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
@@ -22,10 +25,11 @@ class LoginPage extends StatefulWidget {
 
 bool _obscureText = true;
 
-const apiUrlLogin = 'https://loyaltylinx.cyclic.app/api/user/login';
-const apiUrlProfile = 'https://loyaltylinx.cyclic.app/api/user/profile';
+const apiUrlLogin = 'https://loyalty-linxapi.vercel.app/api/user/login';
+const apiUrlProfile = 'https://loyalty-linxapi.vercel.app/api/user/profile';
 const apiUrlValidate =
-    'https://loyaltylinx.cyclic.app/api/user/validate-code-login';
+    'https://loyalty-linxapi.vercel.app/api/user/validate-code-login';
+// final _mobileNumberController = TextEditingController();
 
 @override
 class _LoginPageState extends State<LoginPage> {
@@ -48,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String errorMessage = "";
   String? code;
-  bool onLoad = true;
+  bool onLoad = false;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -88,40 +92,47 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     Future login(String username, String password, context) async {
-      showDialog(
-          barrierColor: Theme.of(context).colorScheme.background,
-          barrierDismissible: false,
-          context: context,
-          builder: (context) {
-            return const Center(child: CircularProgressIndicator());
-          });
-      onLoad = true;
-      final response = await http.post(
-        Uri.parse(apiUrlLogin),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(
-            {'email': username, 'password': password, 'role': "user"}),
-      );
-      if (response.statusCode == 200) {
-        final jsonToken = jsonDecode(response.body);
-        final token = jsonToken['token'];
-        final isFirtTimeLogin = jsonToken['isFirstTimeLogin'];
-        if (isFirtTimeLogin != true) {
-          getProfile(token, jsonToken, context);
+      // showDialog(
+      //     barrierColor: Theme.of(context).colorScheme.background,
+      //     barrierDismissible: false,
+      //     context: context,
+      //     builder: (context) {
+      //       return const Center(child: CircularProgressIndicator());
+      //     });
+      // onLoad = true;
+      try {
+        final response = await http.post(
+          Uri.parse(apiUrlLogin),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(
+              {'email': username, 'password': password, 'role': "user"}),
+        );
+        if (response.statusCode == 200) {
+          print(response);
+          print(response.body);
+          final jsonToken = jsonDecode(response.body);
+          final token = jsonToken['token'];
+          final isFirtTimeLogin = jsonToken['isFirstTimeLogin'];
+          if (isFirtTimeLogin != true) {
+            getProfile(token, jsonToken, context);
+          } else {
+            Navigator.of(context).pushAndRemoveUntil(
+                routeTransition(OtpVerification(
+                    mobileNo: widget.mobileNo!,
+                    token: jsonToken,
+                    sendMethod: "Mobile No",
+                    apiUrlValidate: apiUrlValidate)),
+                (Route<dynamic> route) => false);
+          }
         } else {
-          Navigator.of(context).pushAndRemoveUntil(
-              routeTransition(OtpVerification(
-                  token: jsonToken,
-                  sendMethod: "Mobile No",
-                  apiUrlValidate: apiUrlValidate)),
-              (Route<dynamic> route) => false);
+          print(response.body);
+          final json = jsonDecode(response.body);
+          final message = json['message'];
+          await showMessage(title: "Failed to login", message: message);
+          // Navigator.of(context, rootNavigator: true).pop();
         }
-      } else {
-        // final json = jsonDecode(response.body);
-        print(response.body);
-        // final message = json['message'];
-        // await showMessage(title: "Failed to login", message: message);
-        Navigator.of(context, rootNavigator: true).pop();
+      } catch (e) {
+        print("THE ERROR IS$e");
       }
     }
 
@@ -136,9 +147,24 @@ class _LoginPageState extends State<LoginPage> {
               key: _formKey,
               child: Column(
                 children: <Widget>[
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height / 7,
-                    child: Image.asset('assets/images/loyaltilinxicon.png'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height / 14,
+                        child: Image.asset('assets/images/splash.png'),
+                      ),
+                      const SizedBox(
+                        width: 4,
+                      ),
+                      Text(
+                        "Sample App",
+                        style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.amber.shade700,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 5.0),
                   const Row(children: [
@@ -148,7 +174,8 @@ class _LoginPageState extends State<LoginPage> {
                     //       color: Theme.of(context).colorScheme.primary),
                     // ),
                   ]),
-                  // IntlPhoneField
+                  title("Email"),
+
                   TextFormField(
                     onTapOutside: (event) {
                       FocusManager.instance.primaryFocus?.unfocus();
@@ -162,32 +189,114 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     onChanged: (phoneNumber) {},
                     decoration: InputDecoration(
-                        labelText: "Email",
-                        enabledBorder: UnderlineInputBorder(
+                        filled: true,
+                        fillColor:
+                            Theme.of(context).colorScheme.primaryContainer,
+                        errorStyle: const TextStyle(fontSize: 10),
+                        errorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        focusedErrorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                                width: .5,
-                                color: Theme.of(context).colorScheme.primary)),
-                        focusedBorder: UnderlineInputBorder(
+                                width: 1,
+                                color:
+                                    Theme.of(context).colorScheme.secondary)),
+                        focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              width: 1.5, color: Colors.amber.shade700),
+                              width: 2, color: Colors.amber.shade700),
                         )),
                   ),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  // title('Mobile Number'),
+                  // IntlPhoneField(
+                  //   validator: (p0) {
+                  //     if (p0 == null || p0.number.isEmpty) {
+                  //       return 'Mobile Number is required';
+                  //     }
+                  //     return null;
+                  //   },
+                  //   controller: _mobileNumberController,
+                  //   showCountryFlag: false,
+                  //   decoration: InputDecoration(
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide:
+                  //           BorderSide(width: 2, color: Colors.amber.shade700),
+                  //     ),
+                  //     enabledBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(
+                  //           width: 1,
+                  //           color: Theme.of(context)
+                  //               .colorScheme
+                  //               .secondaryContainer),
+                  //     ),
+                  //     filled: true,
+                  //     fillColor: Theme.of(context).colorScheme.primaryContainer,
+                  //     border: const OutlineInputBorder(
+                  //       borderSide: BorderSide(
+                  //         width: 1.5,
+                  //       ),
+                  //     ),
+                  //   ),
+                  //   initialCountryCode: 'PH',
+                  //   onChanged: (phone) {
+                  //     print(phone.number);
+                  //   },
+                  // ),
+                  // TextFormField(
+                  //   onTapOutside: (event) {
+                  //     FocusManager.instance.primaryFocus?.unfocus();
+                  //   },
+                  //   controller: _passwordController,
+                  //   onChanged: (pass) {},
+                  //   validator: (value) {
+                  //     if (value == null || value.isEmpty) {
+                  //       return 'Please enter a password';
+                  //     }
+                  //     if (value.length < 8) {
+                  //       return 'Please enter a password with at least 8 characters';
+                  //     }
+                  //     return null;
+                  //   },
+                  //   decoration: InputDecoration(
+                  //       suffixIcon: IconButton(
+                  //         icon: Icon(
+                  //           _obscureText
+                  //               ? Icons.visibility_off
+                  //               : Icons.visibility,
+                  //           color: Theme.of(context).colorScheme.primary,
+                  //         ),
+                  //         onPressed: () {
+                  //           setState(() {
+                  //             _obscureText = !_obscureText;
+                  //           });
+                  //         },
+                  //       ),
+                  //       labelText: "Password",
+                  //       enabledBorder: UnderlineInputBorder(
+                  //           borderSide: BorderSide(
+                  //               width: .5,
+                  //               color: Theme.of(context).colorScheme.primary)),
+                  //       focusedBorder: UnderlineInputBorder(
+                  //         borderSide: BorderSide(
+                  //             width: 1.5, color: Colors.amber.shade700),
+                  //       )),
+                  //   textInputAction: TextInputAction.done,
+                  //   obscureText: _obscureText,
+                  // ),
+                  const SizedBox(height: 8.0),
+
+                  title("Password"),
                   TextFormField(
                     onTapOutside: (event) {
                       FocusManager.instance.primaryFocus?.unfocus();
                     },
                     controller: _passwordController,
-                    onChanged: (pass) {},
+                    onChanged: (value) {},
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a password';
                       }
-                      if (value.length < 8) {
-                        return 'Please enter a password with at least 8 characters';
-                      }
+
                       return null;
                     },
                     decoration: InputDecoration(
@@ -204,14 +313,22 @@ class _LoginPageState extends State<LoginPage> {
                             });
                           },
                         ),
-                        labelText: "Password",
-                        enabledBorder: UnderlineInputBorder(
+                        filled: true,
+                        fillColor:
+                            Theme.of(context).colorScheme.primaryContainer,
+                        errorStyle: const TextStyle(fontSize: 10),
+                        errorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        focusedErrorBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.red)),
+                        enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                                width: .5,
-                                color: Theme.of(context).colorScheme.primary)),
-                        focusedBorder: UnderlineInputBorder(
+                                width: 1,
+                                color:
+                                    Theme.of(context).colorScheme.secondary)),
+                        focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              width: 1.5, color: Colors.amber.shade700),
+                              width: 2, color: Colors.amber.shade700),
                         )),
                     textInputAction: TextInputAction.done,
                     obscureText: _obscureText,
@@ -241,32 +358,45 @@ class _LoginPageState extends State<LoginPage> {
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(3)),
-                      elevation: 5,
                     ),
-                    onPressed:
-                        // onLoad == true
-                        //     ? null
-                        //     :
-
-                        () async {
-                      if (_formKey.currentState!.validate()) {
-                        login(_emailController.text.toString(),
-                            _passwordController.text.toString(), context);
-                      } else {
-                        setState(() {
-                          onLoad == false;
-                        });
-                      }
-                    },
+                    onPressed: onLoad == true
+                        ? null
+                        : () async {
+                            if (_formKey.currentState!.validate()) {
+                              login(_emailController.text.toString(),
+                                  _passwordController.text.toString(), context);
+                            } else {
+                              setState(() {
+                                onLoad = false;
+                              });
+                            }
+                          },
                     child: const SizedBox(
                       height: 30,
                       child: Text(
-                        'Login',
+                        'LOGIN',
                         style: TextStyle(fontSize: 20.0, color: Colors.white),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 22.0),
+                  Text.rich(
+                    TextSpan(
+                      text: 'Does not have account? ',
+                      children: [
+                        TextSpan(
+                            text: " Sign Up",
+                            style: TextStyle(
+                                color: Colors.amber.shade900,
+                                fontWeight: FontWeight.bold),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(context,
+                                    routeTransitions(const NumberRegister()));
+                              }),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
@@ -276,11 +406,26 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Column title(String title) {
+    return Column(children: [
+      Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      const SizedBox(
+        height: 8.0,
+      )
+    ]);
+  }
+
   @override
   void dispose() {
-    _emailController.clear();
-    _passwordController.clear();
-    _obscureText = true;
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -299,7 +444,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   showMessage({required String title, required String message}) {
-    showCupertinoDialog(
+    if (mounted) {
+      showCupertinoDialog(
         context: context,
         builder: (contex) {
           return CupertinoAlertDialog(
@@ -311,13 +457,15 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () {
                   Navigator.pop(context);
                   setState(() {
-                    onLoad = true;
+                    onLoad = false;
                   });
                 },
               ),
             ],
           );
-        });
+        },
+      );
+    }
   }
 }
 
@@ -333,6 +481,22 @@ PageRouteBuilder<dynamic> routeTransition(screenView) {
                 CurvedAnimation(parent: animation, curve: Curves.easeOut)),
             child: child,
           ));
+    },
+  );
+}
+
+PageRouteBuilder<dynamic> routeTransitions(screenView) {
+  return PageRouteBuilder(
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) => screenView,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      );
     },
   );
 }

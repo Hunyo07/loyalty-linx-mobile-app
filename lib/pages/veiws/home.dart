@@ -2,8 +2,10 @@
 
 import 'dart:convert';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:currency_formatter/currency_formatter.dart';
 import 'package:loyaltylinx/main.dart';
@@ -11,12 +13,12 @@ import 'package:loyaltylinx/pages/veiws/home/apply_credit_merch.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
 import 'package:loyaltylinx/pages/veiws/verification/otp_send_method.dart';
 import 'package:http/http.dart' as http;
+import 'package:unicons/unicons.dart';
 
-String user = "John paul";
 const CurrencyFormat phpSettings = CurrencyFormat(
   code: 'php',
   symbol: 'Php',
-  symbolSide: SymbolSide.left,
+  symbolSide: SymbolSide.none,
   thousandSeparator: ',',
   decimalSeparator: '.',
   symbolSeparator: ' ',
@@ -45,6 +47,32 @@ final _promotions = <Widget>[
     },
   ),
   Merchant(
+    path: "assets/images/colorful.jpg",
+    title: "Shop  Owner",
+    model: "assets/images/whiteman.png",
+    onTap: () {
+      print("this q");
+    },
+  ),
+];
+final _deals = <Widget>[
+  Deals(
+    model: "assets/images/women.png",
+    title: "Book Your Flight Now!",
+    path: "assets/images/airplane.jpg",
+    onTap: () {
+      print("this q");
+    },
+  ),
+  Deals(
+    model: "assets/images/blackman.png",
+    title: "Shop  Owner",
+    path: "assets/images/bgOrange.jpg",
+    onTap: () {
+      print("this q");
+    },
+  ),
+  Deals(
     path: "assets/images/colorful.jpg",
     title: "Shop  Owner",
     model: "assets/images/whiteman.png",
@@ -102,6 +130,9 @@ class LogoutButton extends StatelessWidget {
     );
   }
 }
+
+int _pageIndicator = 1;
+int _dealIndicator = 1;
 
 final List<Map<String, Object>> _spendings = [
   {
@@ -180,21 +211,32 @@ class MyBodyWidget extends StatefulWidget {
   State<MyBodyWidget> createState() => _MyBodyWidgetState();
 }
 
-class _MyBodyWidgetState extends State<MyBodyWidget> {
-  String? statusHome;
-  String? code;
+bool? isVerified;
+String? statusHome;
+String? code;
 
+class _MyBodyWidgetState extends State<MyBodyWidget> {
   @override
   void initState() {
+    print(userData1[0]['verification']['isVerified']);
+    isVerified = userData1[0]['verification']['isVerified'];
     statusHome = userData1[0]['verification']['status'];
+
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     Future<void> getMerchantsList(context) async {
+      showDialog(
+          barrierColor: Theme.of(context).colorScheme.background,
+          barrierDismissible: false,
+          context: context,
+          builder: (context) {
+            return const Center(child: CircularProgressIndicator());
+          });
       var url =
-          Uri.parse('https://loyaltylinx.cyclic.app/api/merchant/get-all');
+          Uri.parse('https://loyalty-linxapi.vercel.app/api/merchant/get-all');
       var response = await http.get(
         url,
         headers: {
@@ -206,12 +248,13 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
         final json = (jsonDecode(response.body)['merchants'] as List)
             .map((dynamic e) => e as Map<String, dynamic>)
             .toList();
+        Navigator.of(context, rootNavigator: true).pop();
         Navigator.of(context).push(
-          routeTransition(ApplyCredit(
-            merchants: json,
-          )),
+          routeTransition(ApplyCredit(merchants: json)),
         );
       } else {
+        Navigator.of(context, rootNavigator: true).pop();
+
         print("faield");
       }
     }
@@ -249,7 +292,7 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
           builder: (context) {
             return const Center(child: CircularProgressIndicator());
           });
-      refreshCode('https://loyaltylinx.cyclic.app/api/user/refresh-code',
+      refreshCode('https://loyalty-linxapi.vercel.app/api/user/refresh-code',
           tokenMain!, context);
     }
 
@@ -272,7 +315,7 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
                   onPressed: () async {
                     handleToSendOtp();
                     // refreshCode(
-                    //     'https://loyaltylinx.cyclic.app/api/user/refresh-code',
+                    //     'https://loyalty-linxapi.vercel.app/api/user/refresh-code',
                     //     tokenMain!,
                     //     context);
                     // Navigator.pop(context);
@@ -337,289 +380,269 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
     }
 
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-        child: Column(children: <Widget>[
-          const SizedBox(
-            height: 16,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              cardPoints(context, balance, "Available Credits", "Credits", () {
-                Navigator.pushNamed(context, '/transactions_credit');
-              }, "Transactions"),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              cardPoints(
-                context,
-                pointsBal,
-                "Available Points",
-                "Rewards",
-                () {
-                  Navigator.pushNamed(context, '/transactions_reward');
-                },
-                "Points history",
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: 16,
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Theme.of(context).colorScheme.primaryContainer,
+      child: Column(children: <Widget>[
+        const SizedBox(
+          height: 16,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            cardPoints(context, balance, "Available Credits", "Credits", () {
+              Navigator.pushNamed(context, '/transactions_credit');
+            }, "History"),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            cardPoints(
+              context,
+              pointsBal,
+              "Available Points",
+              "Rewards",
+              () {
+                Navigator.pushNamed(context, '/transactions_reward');
+              },
+              "History",
             ),
-            child: Column(
-              children: [
-                const Row(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 10, left: 15),
-                      child: Text(
-                        "Services",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w600),
-                      ),
+          ],
+        ),
+        const SizedBox(
+          height: 16,
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 15),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Theme.of(context).colorScheme.primaryContainer,
+          ),
+          child: Column(
+            children: [
+              const Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10, left: 15),
+                    child: Text(
+                      "Services",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
-                  ],
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height / 5.5,
-                  child: GridView(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 20,
-                            mainAxisExtent: 65,
-                            crossAxisSpacing: 20),
-                    clipBehavior: Clip.none,
-                    children: [
-                      buttons(
-                          'assets/images/web_browser.png',
-                          'assets/images/apply_light.png',
-                          statusHome == "new"
-                              ? () {
-                                  showMessage(
-                                      title: 'Not verified yet',
-                                      message:
-                                          'You want to proceed to veirification?');
-                                }
-                              : statusHome == 'pending'
-                                  ? () {
-                                      showMessagePending(
-                                          message:
-                                              "Your request for verification is on process",
-                                          title: "Review");
-                                    }
-                                  : statusHome == 'approve'
-                                      ? () async {
-                                          getMerchantsList(context);
-                                          print("Obejct");
-                                        }
-                                      : () {
-                                          showMessage(
-                                              title: 'Not verified yet',
-                                              message:
-                                                  'You want to proceed to veirification?');
-                                        },
-                          "Apply credit"),
-                      buttons('assets/images/payment.png',
-                          'assets/images/payment_method_light.png', () {
-                        print(userData1);
-                      }, "Pay loan"),
-                      buttons(
-                          'assets/images/monitor.png',
-                          'assets/images/monitor_light.png',
-                          () {},
-                          "Status monitor"),
-                      buttons(
+                  ),
+                ],
+              ),
+              SizedBox(
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height / 5.5,
+                child: GridView(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 20,
+                      mainAxisExtent: 65,
+                      crossAxisSpacing: 20),
+                  clipBehavior: Clip.none,
+                  children: [
+                    buttons(
+                        'assets/images/web_browser.png',
+                        'assets/images/apply_light.png',
+                        statusHome == "new" && isVerified! == false
+                            ? () {
+                                showMessage(
+                                    title: 'Not verified yet',
+                                    message:
+                                        'You want to proceed to veirification?');
+                              }
+                            : statusHome == "pending" && isVerified! == false
+                                ? () {
+                                    showMessagePending(
+                                        message:
+                                            "Your verification request is still on process",
+                                        title: "");
+                                  }
+                                : statusHome == "approved" &&
+                                        isVerified! == true
+                                    ? () async {
+                                        getMerchantsList(context);
+                                      }
+                                    : () {
+                                        showMessage(
+                                            title: 'Not verified yet',
+                                            message:
+                                                'You want to proceed to veirification?');
+                                      },
+                        "Apply credit"),
+                    buttons('assets/images/payment.png',
+                        'assets/images/payment_method_light.png', () {
+                      print(userData1);
+                    }, "Pay credit"),
+                    buttons(
                         'assets/icons/conversion-rate.png',
                         'assets/icons/conversionLight.png',
                         () {},
-                        "Conversion",
-                      ),
-                      buttons(
-                        'assets/icons/gift.png',
-                        'assets/icons/giftLight.png',
-                        () {},
-                        "Redeem",
-                      ),
-                      buttons(
-                        'assets/icons/noun-loan.png',
-                        'assets/icons/noun-loanLight.png',
-                        () {},
-                        "Loan",
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          const Row(
-            children: [
-              Text(
-                "Whats new?",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          Divider(
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-          const SizedBox(height: 16.0),
-          Stack(children: [
-            // Text("hodtog"),
-            Container(
-              padding: const EdgeInsets.all(2),
-              width: MediaQuery.of(context).size.width / 1,
-              height: MediaQuery.of(context).size.height / 3.4,
-              child: PageView.builder(
-                  controller: PageController(
-                    viewportFraction: .80,
-                    initialPage: 1,
-                    keepPage: true,
-                  ),
-                  itemCount: _promotions.length,
-                  itemBuilder: (context, index) {
-                    return _promotions[index];
-                  }),
-            )
-          ]),
-          const SizedBox(height: 30.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Spendings",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  "see all",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade600),
+                        "Convert points"),
+                    buttons(
+                      'assets/icons/gift.png',
+                      'assets/icons/giftLight.png',
+                      () {},
+                      "Redeem",
+                    ),
+                    buttons(
+                      'assets/images/monitor.png',
+                      'assets/images/monitor_light.png',
+                      () {},
+                      "Discover deals",
+                    ),
+                    buttons(
+                      'assets/icons/more.png',
+                      'assets/icons/more_light.png',
+                      () {},
+                      "More",
+                    ),
+                  ],
                 ),
               )
             ],
           ),
-          Divider(
-            color: Theme.of(context).colorScheme.secondary,
+        ),
+        const SizedBox(height: 16.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    "Whats new?",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  AutoSizeText(
+                    'Experience and enjoy our exciting updates',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  )
+                ],
+              ),
+            ],
           ),
-          SizedBox(
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.secondary,
+        ),
+        const SizedBox(height: 16.0),
+        Stack(children: [
+          // Text("hodtog"),
+          Container(
+            padding: const EdgeInsets.all(2),
             width: MediaQuery.of(context).size.width / 1,
-            height: MediaQuery.of(context).size.width / seeAll,
-            child: ListView.builder(
-                itemCount: _spendings.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final action = _spendings[index]['action'];
-                  final date = _spendings[index]['date'];
-                  final amount = _spendings[index]['amount'];
-                  return Container(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(2.0)),
-                    child: InkWell(
-                      splashColor: Colors.grey,
-                      splashFactory: InkRipple.splashFactory,
-                      onTap: () {
-                        // _showTransactionDetailsDialog(
-                        //     context, merch, action, date, amount);
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            height: MediaQuery.of(context).size.height * .10,
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 1,
-                                  spreadRadius: 2,
-                                  offset: const Offset(0, 1),
-                                )
-                              ],
-                              borderRadius: BorderRadius.circular(10),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 40,
-                                ),
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                        padding: const EdgeInsets.all(3),
-                                        child: Text(
-                                          ' $action',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 18),
-                                        )),
-                                    Container(
-                                        padding: const EdgeInsets.all(3),
-                                        child: Text(
-                                          ' $date',
-                                          style: const TextStyle(),
-                                        )),
-                                  ],
-                                ),
-                                const Spacer(),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      _spendings[index]['status'] == 'add'
-                                          ? CupertinoIcons.add
-                                          : CupertinoIcons.minus,
-                                      size: 12,
-                                      color:
-                                          _spendings[index]['status'] == 'add'
-                                              ? Colors.green
-                                              : Colors.red,
-                                    ),
-                                    Text("$amount",
-                                        style: TextStyle(
-                                            color: _spendings[index]
-                                                        ['status'] ==
-                                                    'add'
-                                                ? Colors.green
-                                                : Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    // .addOnLongPress(() => _deleteTransaction(context, index));
-                  );
+            height: MediaQuery.of(context).size.height / 3.2,
+            child: PageView.builder(
+                onPageChanged: (index) {
+                  setState(() {
+                    _pageIndicator = index % _promotions.length;
+                  });
+                },
+                controller: PageController(
+                  viewportFraction: .80,
+                  initialPage: 1,
+                  keepPage: true,
+                ),
+                itemCount: _promotions.length,
+                itemBuilder: (context, index) {
+                  return _promotions[index];
                 }),
-          )
+          ),
         ]),
-      ),
+        const SizedBox(height: 8.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: List<Widget>.generate(
+                  _promotions.length,
+                  (index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 400),
+                        width: _pageIndicator == index ? 18 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade900,
+                          border: Border.all(
+                              color: Colors.amber.shade900, width: 2),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      )))),
+        ),
+        const SizedBox(height: 16.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    "Deals and more.....",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.secondary,
+        ),
+        const SizedBox(height: 16.0),
+        Stack(children: [
+          // Text("hodtog"),
+          Container(
+            padding: const EdgeInsets.all(0),
+            width: MediaQuery.of(context).size.width / 1,
+            height: MediaQuery.of(context).size.height / 3.2,
+            child: PageView.builder(
+                onPageChanged: (index) {
+                  setState(() {
+                    _dealIndicator = index % _deals.length;
+                  });
+                },
+                controller: PageController(
+                  viewportFraction: .80,
+                  initialPage: 1,
+                  keepPage: true,
+                ),
+                itemCount: _deals.length,
+                itemBuilder: (context, index) {
+                  return _deals[index];
+                }),
+          ),
+        ]),
+        const SizedBox(height: 8.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: List<Widget>.generate(
+                  _promotions.length,
+                  (index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 400),
+                        width: _dealIndicator == index ? 18 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade900,
+                          border: Border.all(
+                              color: Colors.amber.shade900, width: 2),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      )))),
+        ),
+        const SizedBox(height: 30.0),
+      ]),
     );
   }
 
@@ -697,12 +720,31 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Image.asset(
-                        'assets/images/loyaltilinxicon.png',
-                        fit: BoxFit.scaleDown,
-                      )),
+                  // Container(
+                  //     padding: const EdgeInsets.symmetric(horizontal: 15),
+                  //     child: Image.asset(
+                  //       'assets/images/loyaltilinxicon.png',
+                  //       fit: BoxFit.scaleDown,
+                  //     )),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height / 28,
+                        child: Image.asset('assets/images/splash.png'),
+                      ),
+                      const SizedBox(
+                        width: 4,
+                      ),
+                      Text(
+                        "Sample App",
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.amber.shade900,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
                   SizedBox(
                     height: 30,
                     child: TextButton(
@@ -717,7 +759,7 @@ class _MyBodyWidgetState extends State<MyBodyWidget> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            Icons.history,
+                            UniconsLine.history,
                             color: Colors.white,
                             size: 16,
                           ),
@@ -757,69 +799,119 @@ class Merchant extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
-      child: InkWell(
-        onTap: () {
-          onTap();
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Ink(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                image: DecorationImage(
+                    fit: BoxFit.cover, image: AssetImage(path))),
+            child: Container(
+              width: MediaQuery.of(context).size.width / 1.5,
+              height: MediaQuery.of(context).size.height / 5,
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white,
-                  image: DecorationImage(
-                      fit: BoxFit.cover, image: AssetImage(path))),
+                borderRadius: BorderRadius.circular(5),
+              ),
               child: Container(
-                width: MediaQuery.of(context).size.width / 1.5,
-                height: MediaQuery.of(context).size.height / 5,
+                padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                      image: DecorationImage(image: AssetImage(model))),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(10),
-                                  bottomRight: Radius.circular(10))),
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade900,
-                                fontSize: 18),
-                          ),
-                        )
-                      ]),
-                ),
+                    image: DecorationImage(image: AssetImage(model))),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(10),
+                                bottomRight: Radius.circular(10))),
+                      )
+                    ]),
               ),
             ),
-            const Text(
-              "Descriptions",
-              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
+          const Text(
+            "Title",
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
+          const Text(
+            "Descriptions",
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5)),
+                backgroundColor: Colors.amber.shade900),
+            onPressed: () {
+              onTap();
+            },
+            child: const Text(
+              "Trip for more details",
+              style: TextStyle(fontSize: 12, color: Colors.white),
             ),
-            TextButton(
-              style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5)),
-                  backgroundColor: Colors.amber.shade900),
-              onPressed: () {},
-              child: const Text(
-                "Apply now",
-                style: TextStyle(fontSize: 12, color: Colors.white),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class Deals extends StatelessWidget {
+  const Deals(
+      {super.key,
+      required this.path,
+      required this.title,
+      required this.model,
+      required this.onTap});
+  final String path;
+  final String title;
+  final String model;
+  final Function onTap;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                image: DecorationImage(
+                    fit: BoxFit.cover, image: AssetImage(path))),
+            child: Container(
+              width: MediaQuery.of(context).size.width / 1.2,
+              height: MediaQuery.of(context).size.height / 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
               ),
-            )
-          ],
-        ),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    image: DecorationImage(image: AssetImage(model))),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(10),
+                                bottomRight: Radius.circular(10))),
+                      )
+                    ]),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

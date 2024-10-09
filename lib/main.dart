@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:loyaltylinx/pages/auth/create_acc_number.dart';
 import 'package:loyaltylinx/pages/auth/home_login.dart';
 import 'package:loyaltylinx/pages/auth/link_card.dart';
@@ -12,6 +13,8 @@ import 'package:loyaltylinx/pages/theme/dark_theme.dart';
 import 'package:loyaltylinx/pages/theme/light_theme.dart';
 import 'package:loyaltylinx/pages/veiws/home.dart';
 import 'package:loyaltylinx/pages/veiws/navbottom.dart';
+import 'package:loyaltylinx/pages/veiws/profile/change_password.dart';
+import 'package:loyaltylinx/pages/veiws/profile/settings.dart';
 import 'package:loyaltylinx/pages/veiws/reward_transaction.dart';
 import 'package:loyaltylinx/pages/veiws/rewards.dart';
 import 'package:loyaltylinx/pages/veiws/profile.dart';
@@ -21,10 +24,14 @@ import 'package:http/http.dart' as http;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
-List<dynamic>? userData0;
+List? userData0;
 Object? token;
 String? tokenMain;
 
@@ -40,28 +47,35 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      home: const SplashScreen(),
-      // home: const HomeView(),
-      routes: {
-        '/transactions_credit': (context) => const Transaction(),
-        '/home': (context) => const HomePage(),
-        '/rewards': (context) => const RewardsPage(),
-        '/profile': (context) => const ProfilePage(),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterView(),
-        '/bottomnavbar': (context) => BottomNavBarExample(
-              userData: userData0!,
-            ),
-        '/homeView': (context) => const HomeView(),
-        '/numberRegister': (context) => const NumberRegister(),
-        '/linkCard': (context) => const LinkCard(),
-        '/transactions_reward': (context) => const TransactionRewards(),
-      },
-    );
+    return ValueListenableBuilder<ThemeMode>(
+        valueListenable: notifier,
+        builder: (_, mode, __) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            home: const SplashScreen(),
+            themeMode: mode,
+            // home: const HomeView(),
+            routes: {
+              '/transactions_credit': (context) => const Transaction(),
+              '/home': (context) => const HomePage(),
+              '/rewards': (context) => const RewardsPage(),
+              '/profile': (context) => const ProfilePage(),
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const RegisterView(),
+              '/bottomnavbar': (context) => BottomNavBarExample(
+                    userData: userData0!,
+                  ),
+              '/homeView': (context) => const HomeView(),
+              '/numberRegister': (context) => const NumberRegister(),
+              '/linkCard': (context) => const LinkCard(),
+              '/transactions_reward': (context) => const TransactionRewards(),
+              '/settings': (context) => const Settings(),
+              '/change_password': (context) => const NewPasswordForm(),
+            },
+          );
+        });
   }
 }
 
@@ -75,7 +89,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   Future<void> getProfile(String token, objectToken, context) async {
     final response = await http.get(
-      Uri.parse('https://loyaltylinx.cyclic.app/api/user/profile'),
+      Uri.parse('https://loyalty-linxapi.vercel.app/api/user/profile'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -108,9 +122,8 @@ class _SplashScreenState extends State<SplashScreen> {
     if (token != null) {
       final json = jsonDecode(token.toString());
       if (json != null) {
-        getProfile(json['token'], token, context);
-        print(json);
-        print(json['token']);
+        // getProfile(json['token'], token, context);
+        deleteUserData(context);
       }
     } else {
       Navigator.pushAndRemoveUntil(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/pages/veiws/home/apply_credit_form.dart';
 
 class ApplyCredit extends StatefulWidget {
   final List<Map<String, dynamic>> merchants;
@@ -7,12 +8,6 @@ class ApplyCredit extends StatefulWidget {
   @override
   State<ApplyCredit> createState() => _ApplyCreditState();
 }
-
-final List<Map<String, Object>> mechantser = [
-  {"path": "assets/images/amazon.png"},
-  {"path": "assets/images/sm.png"},
-  {"path": "assets/images/mcdo.png"},
-];
 
 class _ApplyCreditState extends State<ApplyCredit> {
   void refreshList() {
@@ -29,6 +24,11 @@ class _ApplyCreditState extends State<ApplyCredit> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: Theme.of(context).colorScheme.background,
+          leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_back)),
         ),
         body: SafeArea(
           child: RefreshIndicator(
@@ -54,7 +54,16 @@ class _ApplyCreditState extends State<ApplyCredit> {
                         final path = widget.merchants[index]["profilePicture"];
                         final storeName = widget.merchants[index]['storeName'];
                         return Column(
-                          children: [merchant(context, path, () {}, storeName)],
+                          children: [
+                            merchant(context, path, () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => ApplyCreditForm(
+                                            merchants: widget.merchants[index],
+                                          )));
+                            }, storeName)
+                          ],
                         );
                       },
                     )),

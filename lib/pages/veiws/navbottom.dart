@@ -1,3 +1,5 @@
+import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:loyaltylinx/pages/auth/permission_checker.dart';
@@ -6,6 +8,7 @@ import 'package:loyaltylinx/pages/veiws/home.dart';
 import 'package:loyaltylinx/pages/veiws/myqr.dart';
 import 'package:loyaltylinx/pages/veiws/rewards.dart';
 import 'package:loyaltylinx/pages/veiws/profile.dart';
+import 'package:unicons/unicons.dart';
 
 List userData1 = [];
 String? profile;
@@ -19,19 +22,8 @@ class BottomNavBarExample extends StatefulWidget {
   State<BottomNavBarExample> createState() => _BottomNavBarExampleState();
 }
 
-class _BottomNavBarExampleState extends State<BottomNavBarExample> {
-  @override
-  Widget build(BuildContext context) {
-    userData1 = widget.userData;
-    return Scaffold(
-      appBar: homeAppBar(),
-      body: _buildPageView(),
-      bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: newMethod(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
+class _BottomNavBarExampleState extends State<BottomNavBarExample>
+    with TickerProviderStateMixin {
   @override
   void initState() {
     setState(() {
@@ -40,6 +32,28 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
     });
     _pageController = PageController(initialPage: _currentIndex);
     super.initState();
+  }
+
+  void _onItemTapped(int index) {
+    _currentIndex = index;
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.linear,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    userData1 = widget.userData;
+    return Scaffold(
+      // appBar: _currentIndex != 3 ? homeAppBar() : null,
+      appBar: homeAppBar(),
+      body: _buildPageView(),
+      bottomNavigationBar: _buildBottomNavBar(),
+      floatingActionButton: newMethod(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
   }
 
   SizedBox newMethod() {
@@ -54,18 +68,18 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
             },
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
-                side: BorderSide(
-                  width: 4,
-                  color: _currentIndex == 1 || _currentIndex == 2
-                      ? const Color.fromARGB(255, 248, 204, 129)
-                      : Theme.of(context).colorScheme.primaryContainer,
-                )),
-            backgroundColor: Colors.white,
+                side: const BorderSide(
+                    width: 4,
+                    // color: _currentIndex == 1 || _currentIndex == 2
+                    //     ? const Color.fromARGB(255, 248, 204, 129)
+                    //     : Theme.of(context).colorScheme.primaryContainer,
+                    color: Color.fromARGB(255, 248, 204, 129))),
+            backgroundColor: const Color.fromARGB(255, 248, 204, 129),
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  CupertinoIcons.qrcode_viewfinder,
+                  UniconsLine.qrcode_scan,
                   size: 40,
                   color: Color.fromARGB(255, 31, 21, 80),
                 ),
@@ -73,102 +87,72 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
             )));
   }
 
+  final iconList = <IconData>[
+    UniconsLine.home,
+    UniconsLine.credit_card,
+    UniconsLine.usd_circle,
+    UniconsLine.user_circle
+  ];
+
   int _currentIndex = 0;
   final List<Widget> _pages = [
     const HomePage(),
-    const RewardsPage(),
     const CreditPage(),
+    const RewardsPage(),
     const ProfilePage(),
   ];
   late PageController _pageController;
+  final autoSizeGroup = AutoSizeGroup();
 
   ClipRRect _buildBottomNavBar() {
-    Brightness brightness = Theme.of(context).brightness;
-    bool isDark = brightness == Brightness.dark;
     return ClipRRect(
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(30),
+          top: Radius.circular(0),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.ease,
+        child: AnimatedBottomNavigationBar.builder(
+            itemCount: _pages.length,
+            tabBuilder: (int index, bool isActive) {
+              final color = isActive ? Colors.amber.shade900 : Colors.black;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    iconList[index],
+                    size: 24,
+                    color: color,
+                  ),
+                  const SizedBox(
+                    height: 4.0,
+                  ),
+                ],
               );
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.house_alt_fill),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
-                child: Icon(
-                  CupertinoIcons.gift_fill,
-                ),
-              ),
-              label: 'Rewards',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 0, 0),
-                child: Icon(CupertinoIcons.creditcard_fill),
-              ),
-              label: 'Credits',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person_alt_circle_fill),
-              label: 'Profile',
-            ),
-          ],
-          selectedItemColor: Colors.amber.shade900,
-          unselectedItemColor: _currentIndex == 0 && isDark
-              ? Colors.white
-              : _currentIndex == 3 && isDark
-                  ? Colors.white
-                  : Colors.black,
-          iconSize: 20,
-          backgroundColor: _currentIndex == 1 || _currentIndex == 2
-              ? const Color.fromARGB(255, 248, 204, 129)
-              : Theme.of(context).colorScheme.primaryContainer,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-        ));
+            },
+            backgroundColor: const Color.fromARGB(255, 248, 204, 129),
+            activeIndex: _currentIndex,
+            notchSmoothness: NotchSmoothness.defaultEdge,
+            gapLocation: GapLocation.center,
+            leftCornerRadius: 28,
+            rightCornerRadius: 28,
+            scaleFactor: BorderSide.strokeAlignCenter,
+            onTap: _onItemTapped));
   }
 
-  final appBarGradient = const LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Colors.blueAccent, Colors.purpleAccent],
-  );
+  final Map<int, String> titles = {
+    0: 'Home',
+    1: 'Credits',
+    2: 'Rewards',
+    3: 'Profile'
+  };
+
   AppBar homeAppBar() {
-    Brightness brightness = Theme.of(context).brightness;
-    bool isDark = brightness == Brightness.dark;
     return AppBar(
       title: Text(
-        _currentIndex == 0
-            ? "Home"
-            : _currentIndex == 1
-                ? "Rewards"
-                : _currentIndex == 2
-                    ? "Credits"
-                    : "Profile",
-        style: TextStyle(
-            color: _currentIndex == 1 || _currentIndex == 2
-                ? Colors.black87
-                : Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600),
+        titles[_currentIndex]!,
+        style:
+            const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
       ),
-      backgroundColor: _currentIndex == 1 || _currentIndex == 2
-          ? const Color.fromARGB(255, 248, 204, 129)
-          : Theme.of(context).colorScheme.background,
+      backgroundColor: const Color.fromARGB(255, 248, 204, 129),
       elevation: 0,
       leading: null,
       automaticallyImplyLeading: false,
@@ -179,42 +163,38 @@ class _BottomNavBarExampleState extends State<BottomNavBarExample> {
             children: [
               IconButton(
                 onPressed: () => {},
-                icon: Icon(
-                  Icons.notifications,
-                  color: _currentIndex == 1 || _currentIndex == 2
-                      ? Colors.black87
-                      : Theme.of(context).colorScheme.primary,
-                  size: 35,
+                icon: const Icon(
+                  UniconsLine.bell,
+                  color: Colors.black,
                 ),
               ),
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentIndex = 3;
-                      _pageController.animateToPage(
-                        _currentIndex,
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.ease,
-                      );
-                    });
+              CircleAvatar(
+                radius: _currentIndex != 3 ? 18 : 0,
+                backgroundColor: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(100),
+                  onTap: () {
+                    _currentIndex = 3;
+                    _pageController.animateToPage(
+                      _currentIndex,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.ease,
+                    );
                   },
-                  icon: Container(
+                  child: Ink(
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white : Colors.grey.shade500,
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width * .09,
-                        height: MediaQuery.of(context).size.height * .09,
-                        child: Image.network(
-                          profile!,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  )),
+                        borderRadius: BorderRadius.circular(100),
+                        image: DecorationImage(
+                            image: NetworkImage(
+                              profile!,
+                            ),
+                            fit: BoxFit.cover)),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              )
             ],
           ),
         )
@@ -265,7 +245,8 @@ void showQRCodeModal(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return DraggableScrollableSheet(
-          initialChildSize: 0.60,
+          snapAnimationDuration: const Duration(milliseconds: 400),
+          initialChildSize: .60,
           minChildSize: 0.3,
           maxChildSize: 1,
           builder: (BuildContext context, ScrollController scrollController) {

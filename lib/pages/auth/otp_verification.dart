@@ -16,11 +16,13 @@ class OtpVerification extends StatefulWidget {
   final String sendMethod;
   final String apiUrlValidate;
   final Map<String, dynamic> token;
+  final String mobileNo;
   const OtpVerification(
       {super.key,
       required this.sendMethod,
       required this.apiUrlValidate,
-      required this.token});
+      required this.token,
+      required this.mobileNo});
 
   @override
   State<OtpVerification> createState() => _OtpVerificationState();
@@ -28,6 +30,24 @@ class OtpVerification extends StatefulWidget {
 
 class _OtpVerificationState extends State<OtpVerification> {
   final _formKey = GlobalKey<FormState>();
+  Timer? _timer;
+  int _secondsRemaining = 180;
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _startTimer() async {
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        } else {
+          _timer?.cancel;
+        }
+      });
+    });
+  }
 
   bool clear = false;
 
@@ -72,7 +92,7 @@ class _OtpVerificationState extends State<OtpVerification> {
     Future<void> validate(String token, Map<String, dynamic> objectToken,
         String code, context) async {
       var url = Uri.parse(
-          'https://loyaltylinx.cyclic.app/api/user/validate-code-login');
+          'https://loyalty-linxapi.vercel.app/api/user/validate-code-login');
       var response = await http.post(
         url,
         headers: {
@@ -87,7 +107,7 @@ class _OtpVerificationState extends State<OtpVerification> {
       } else {
         // final json = jsonDecode(response.body);
         Navigator.of(context, rootNavigator: true).pop();
-        // await showMessage(title: "Failed to login", message: message);
+        await showMessage(title: "Failed to login", message: "Invalid Code");
       }
     }
 
@@ -115,7 +135,7 @@ class _OtpVerificationState extends State<OtpVerification> {
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.secondary,
                       fontWeight: FontWeight.w500)),
-              Text("",
+              Text(widget.mobileNo,
                   style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue.shade400,
@@ -154,17 +174,18 @@ class _OtpVerificationState extends State<OtpVerification> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                 ),
-                onPressed: () {
-                  // debugPrint(widget);
-                },
-                child: const Text(
-                  'Resend',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
+                onPressed: _secondsRemaining > 0 ? null : () {},
+                child: _secondsRemaining > 0
+                    ? Text(
+                        "Resend OTP in ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}")
+                    : const Text(
+                        'Resend',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ],
           ),

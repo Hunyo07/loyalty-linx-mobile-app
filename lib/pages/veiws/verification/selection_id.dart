@@ -33,7 +33,7 @@ class SelectionId extends StatefulWidget {
   State<SelectionId> createState() => _SelectionIdState();
 }
 
-const apiUrlId = 'https://loyaltylinx.cyclic.app/api/upload/valid-id';
+const apiUrlId = 'https://loyalty-linxapi.vercel.app/api/upload/valid-id';
 String? birthDate;
 String? gender;
 String? province;
@@ -46,23 +46,22 @@ bool _isFlashOn = false;
 
 class _SelectionIdState extends State<SelectionId> {
   late CameraController controller;
-  List<Object> userData = [];
 
-  getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+  // getUserData() async {
+  //   final prefs = await SharedPreferences.getInstance();
 
-    final userData1 = prefs.getString('user_data');
-    if (userData1 != null) {
-      userData = [jsonDecode(userData1)['userProfile']];
-      debugPrint(userData.runtimeType.toString());
-    } else {
-      debugPrint('User data not found');
-    }
-  }
+  //   final userData1 = prefs.getString('user_data');
+  //   if (userData1 != null) {
+  //     userData = [jsonDecode(userData1)['userProfile']];
+  //     debugPrint(userData.runtimeType.toString());
+  //   } else {
+  //     debugPrint('User data not found');
+  //   }
+  // }
 
   @override
   void initState() {
-    getUserData();
+    // getUserData();
     setState(() {
       birthDate = widget.birthDate;
       gender = widget.gender;
@@ -71,6 +70,7 @@ class _SelectionIdState extends State<SelectionId> {
       municipal = widget.municipality;
       province = widget.province;
     });
+
     super.initState();
   }
 
@@ -86,7 +86,7 @@ class _SelectionIdState extends State<SelectionId> {
                   context,
                   MaterialPageRoute(
                       builder: (context) =>
-                          BottomNavBarExample(userData: userData)),
+                          BottomNavBarExample(userData: userData1)),
                   (route) => false);
             },
             icon: const Icon(Icons.arrow_back)),
@@ -463,8 +463,8 @@ class _CameraViewState extends State<CameraView> {
 
   @override
   void initState() {
-    super.initState();
     _initializeCameraFuture = _initializeCamera();
+    super.initState();
   }
 
   Future<void> _initializeCamera() async {
@@ -482,7 +482,6 @@ class _CameraViewState extends State<CameraView> {
       }
       setState(() {});
     });
-
     // await _controller.initialize();
   }
 

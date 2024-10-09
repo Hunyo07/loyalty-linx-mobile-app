@@ -38,7 +38,7 @@ final _newPasswordController = TextEditingController();
 final _newConfirmController = TextEditingController();
 final _currentPasswordController = TextEditingController();
 final apiUrlChangePass =
-    'https://loyaltylinx.cyclic.app/api/user/update-password/$userId';
+    'https://loyalty-linxapi.vercel.app/api/user/update-password/$userId';
 
 class NewPasswordFormState extends State<NewPasswordForm> {
   final _formKey = GlobalKey<FormState>();
@@ -65,6 +65,13 @@ class NewPasswordFormState extends State<NewPasswordForm> {
   }
 
   Future<void> changePass(password, newPassword, context) async {
+    showDialog(
+        barrierColor: Theme.of(context).colorScheme.background,
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return const Center(child: CircularProgressIndicator());
+        });
     var url = Uri.parse(apiUrlChangePass);
     var response = await http.put(url,
         headers: {
@@ -114,21 +121,19 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
-                  }
-                  if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$')
-                      .hasMatch(value)) {
-                    return 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit';
+                    return 'Please enter current password';
                   }
                   if (value != _currentPasswordController.text) {
                     return 'Password not match';
                   }
-                  if (value.length < 8) {
-                    return 'Please enter a password with at least 8 characters';
-                  }
+
                   return null;
                 },
+                onTapOutside: (event) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
                 decoration: InputDecoration(
+                    helperMaxLines: 2,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureTextCurrents
@@ -142,7 +147,8 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         });
                       },
                     ),
-                    errorMaxLines: 2,
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.primaryContainer,
                     errorStyle: const TextStyle(fontSize: 10),
                     errorBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.red)),
@@ -150,11 +156,11 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         borderSide: BorderSide(color: Colors.red)),
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            width: .5,
-                            color: Theme.of(context).colorScheme.primary)),
+                            width: 1,
+                            color: Theme.of(context).colorScheme.secondary)),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(width: 1.5, color: Colors.amber.shade700),
+                          BorderSide(width: 2, color: Colors.amber.shade700),
                     )),
                 textInputAction: TextInputAction.done,
                 obscureText: _obscureTextCurrents,
@@ -177,7 +183,8 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a password';
                   }
-                  if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$')
+                  if (!RegExp(
+                          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
                       .hasMatch(value)) {
                     return 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit';
                   }
@@ -188,6 +195,9 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                     return 'Please enter a password with at least 8 characters';
                   }
                   return null;
+                },
+                onTapOutside: (event) {
+                  FocusManager.instance.primaryFocus?.unfocus();
                 },
                 decoration: InputDecoration(
                     suffixIcon: IconButton(
@@ -201,7 +211,8 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         });
                       },
                     ),
-                    errorMaxLines: 2,
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.primaryContainer,
                     errorStyle: const TextStyle(fontSize: 10),
                     errorBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.red)),
@@ -209,11 +220,11 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         borderSide: BorderSide(color: Colors.red)),
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            width: .5,
-                            color: Theme.of(context).colorScheme.primary)),
+                            width: 1,
+                            color: Theme.of(context).colorScheme.secondary)),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(width: 1.5, color: Colors.amber.shade700),
+                          BorderSide(width: 2, color: Colors.amber.shade700),
                     )),
                 textInputAction: TextInputAction.done,
                 obscureText: _obscureText,
@@ -228,6 +239,9 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                 height: 16,
               ),
               TextFormField(
+                onTapOutside: (event) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
                 controller: _newConfirmController,
                 onChanged: (value) {},
                 validator: (value) {
@@ -256,6 +270,8 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         });
                       },
                     ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.primaryContainer,
                     errorStyle: const TextStyle(fontSize: 10),
                     errorBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.red)),
@@ -263,11 +279,11 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                         borderSide: BorderSide(color: Colors.red)),
                     enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            width: .5,
-                            color: Theme.of(context).colorScheme.primary)),
+                            width: 1,
+                            color: Theme.of(context).colorScheme.secondary)),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(width: 1.5, color: Colors.amber.shade700),
+                          BorderSide(width: 2, color: Colors.amber.shade700),
                     )),
                 textInputAction: TextInputAction.done,
                 obscureText: _obscureTextConfirm,
@@ -284,15 +300,6 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5))),
                         onPressed: () async {
-                          showDialog(
-                              barrierColor:
-                                  Theme.of(context).colorScheme.background,
-                              barrierDismissible: false,
-                              context: context,
-                              builder: (context) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              });
                           if (_formKey.currentState!.validate()) {
                             changePass(
                                 _currentPasswordController.text.toString(),

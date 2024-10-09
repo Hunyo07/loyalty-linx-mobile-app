@@ -454,7 +454,7 @@ class ImagePreview extends StatefulWidget {
 class _ImagePreviewState extends State<ImagePreview> {
   // Future<void> uploadFile(File imageFile, String token) async {
   //   // Define the endpoint URL for uploading the image
-  //   Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/valid-id');
+  //   Uri url = Uri.parse('https://loyalty-linxapi.vercel.app/api/upload/valid-id');
 
   //   // Create a multipart request
   //   var request = http.MultipartRequest('POST', url);

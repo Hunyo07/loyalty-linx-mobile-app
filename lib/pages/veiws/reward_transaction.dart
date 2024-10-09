@@ -20,35 +20,35 @@ final List<Map<String, Object>> staticTransactData = [
     "action": "Paid",
     "date": "3 April 2024, 856 PM",
     "amount": 1500.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Shop",
     "action": "Buy",
     "date": "5 April 2024, 856 PM",
     "amount": 1502.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Hotel",
     "action": "Paid",
     "date": "3 April 2022, 856 PM",
     "amount": 6000.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Travel",
     "action": "Paid",
     "date": "3 April 2024, 856 PM",
     "amount": 150.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Travel",
     "action": "Hotel",
     "date": "3 April 2024, 856 PM",
     "amount": 510.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Gift",
@@ -62,7 +62,7 @@ final List<Map<String, Object>> staticTransactData = [
     "action": "Paid",
     "date": "3 April 2024, 856 PM",
     "amount": 510.23,
-    "status": "less"
+    "status": "add"
   },
   {
     "merhcant": "Hotel",
@@ -121,7 +121,7 @@ class TransactionRewards extends StatelessWidget {
                       final action = staticTransactData[index]['action'];
                       final date = staticTransactData[index]['date'];
                       final amount = staticTransactData[index]['amount'];
-
+                      final status = staticTransactData[index]['status'];
                       return Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
@@ -186,22 +186,17 @@ class TransactionRewards extends StatelessWidget {
                                     Row(
                                       children: [
                                         Icon(
-                                          staticTransactData[index]['status'] ==
-                                                  'add'
+                                          status == 'add'
                                               ? CupertinoIcons.add
                                               : CupertinoIcons.minus,
                                           size: 12,
-                                          color: staticTransactData[index]
-                                                      ['status'] ==
-                                                  'add'
+                                          color: status == 'add'
                                               ? Colors.green
                                               : Colors.red,
                                         ),
                                         Text("$amount",
                                             style: TextStyle(
-                                                color: staticTransactData[index]
-                                                            ['status'] ==
-                                                        'add'
+                                                color: status == 'add'
                                                     ? Colors.green
                                                     : Colors.red,
                                                 fontWeight: FontWeight.bold,

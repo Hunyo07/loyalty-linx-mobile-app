@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loyaltylinx/pages/veiws/reward_transaction.dart';
 
 class RewardsPage extends StatelessWidget {
   const RewardsPage({super.key});
@@ -44,6 +46,73 @@ class RewardView extends StatelessWidget {
     return const MyBodyWidget();
   }
 }
+
+final List<Map<String, Object>> _loans = [
+  {
+    "description": "FOr the family",
+    "merhcant": "Loan",
+    "action": "Paid",
+    "date": "3 April 2024, 856 PM",
+    "amount": 1500.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Shop",
+    "action": "Buy",
+    "date": "5 April 2024, 856 PM",
+    "amount": 1502.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Hotel",
+    "action": "Paid",
+    "date": "3 April 2022, 856 PM",
+    "amount": 6000.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Travel",
+    "action": "Paid",
+    "date": "3 April 2024, 856 PM",
+    "amount": 150.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Travel",
+    "action": "Hotel",
+    "date": "3 April 2024, 856 PM",
+    "amount": 510.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Gift",
+    "action": "Receive",
+    "date": "3 April 2024, 856 PM",
+    "amount": 510.23,
+    "status": "add"
+  },
+  {
+    "merhcant": "Hotel",
+    "action": "Paid",
+    "date": "3 April 2024, 856 PM",
+    "amount": 510.23,
+    "status": "less"
+  },
+  {
+    "merhcant": "Hotel",
+    "action": "Rent",
+    "date": "3 April 2024, 856 PM",
+    "amount": 510.23,
+    "status": "add"
+  },
+  {
+    "merhcant": "Gift",
+    "action": "Recieve",
+    "date": "3 April 2024, 856 PM",
+    "amount": 510.23,
+    "status": "add"
+  },
+];
 
 class LogoutButton extends StatelessWidget {
   const LogoutButton({super.key});
@@ -126,18 +195,6 @@ class MyBodyWidget extends StatelessWidget {
             child: Column(
               children: [
                 FittedBox(
-                  child: Center(
-                    child: Text(
-                      "Points balance",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                  ),
-                ),
-                FittedBox(
                   child: Container(
                       // height: MediaQuery.of(context).size.height * .04,
                       decoration: const BoxDecoration(
@@ -159,63 +216,172 @@ class MyBodyWidget extends StatelessWidget {
                         ),
                       )),
                 ),
+                FittedBox(
+                  child: Center(
+                    child: Text(
+                      "Available points",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ],
       ),
       const SizedBox(height: 16.0),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          buttons(
-            () {},
-            'assets/icons/conversionLight.png',
-            "Conversion",
-            'assets/icons/conversion-rate.png',
-          ),
-          buttons(() {}, 'assets/icons/giftLight.png', "Redeem",
-              'assets/icons/gift.png'),
-          buttons(() {}, 'assets/icons/shopLight.png', "Shop",
-              'assets/icons/shop.png'),
-          buttons(() {
-            Navigator.pushNamed(context, '/transactions_reward');
-          }, 'assets/icons/historyLight.png', "History",
-              'assets/icons/history.png'),
-        ],
-      ),
-      const SizedBox(height: 16.0),
+
       Container(
         margin: const EdgeInsets.fromLTRB(20, 2, 20, 2),
         decoration: BoxDecoration(
             border: Border(
                 bottom: BorderSide(width: 1, color: Colors.grey.shade500))),
-        child: const Row(
+        child: Row(
           children: [
-            Text(
-              "Merchants",
+            const Text(
+              "History",
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+            ),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/transactions_reward');
+              },
+              style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Theme.of(context).colorScheme.background,
+                  padding: const EdgeInsets.all(0),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5))),
+              child: const Text(
+                "see all",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.blueAccent),
+              ),
             ),
           ],
         ),
       ),
       const SizedBox(height: 8.0),
-      Padding(
-          padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
-          child: GridView.builder(
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 16.0,
-              crossAxisSpacing: 16.0,
-            ),
-            physics: const ClampingScrollPhysics(),
-            itemCount: mechants.length,
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        width: MediaQuery.of(context).size.width / 1,
+        height: MediaQuery.of(context).size.width / 0.7,
+        child: ListView.builder(
+            itemCount: _loans.length,
             itemBuilder: (BuildContext context, int index) {
-              final path = mechants[index]["path"];
-              return merchant(context, path, () {});
-            },
-          )),
+              final merch = staticTransactData[index]['merhcant'];
+              final action = staticTransactData[index]['action'];
+              final date = staticTransactData[index]['date'];
+              final amount = staticTransactData[index]['amount'];
+              final status = staticTransactData[index]['status'];
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(2.0)),
+                child: InkWell(
+                  splashColor: Colors.grey,
+                  onTap: () {
+                    // _showTransactionDetailsDialog(
+                    //     context, merch, action, date, amount);
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        height: MediaQuery.of(context).size.height * .10,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 1,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 1),
+                            )
+                          ],
+                          borderRadius: BorderRadius.circular(10),
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 40,
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Text(
+                                      ' $action',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 18),
+                                    )),
+                                Container(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Text(
+                                      ' $date',
+                                      style: const TextStyle(),
+                                    )),
+                              ],
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Icon(
+                                  status == 'add'
+                                      ? CupertinoIcons.add
+                                      : CupertinoIcons.minus,
+                                  size: 12,
+                                  color: status == 'add'
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                                Text("$amount",
+                                    style: TextStyle(
+                                        color: status == 'add'
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                // .addOnLongPress(() => _deleteTransaction(context, index));
+              );
+            }),
+      ),
+      // Padding(
+      //     padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+      //     child: GridView.builder(
+      //       shrinkWrap: true,
+      //       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      //         crossAxisCount: 3,
+      //         mainAxisSpacing: 16.0,
+      //         crossAxisSpacing: 16.0,
+      //       ),
+      //       physics: const ClampingScrollPhysics(),
+      //       itemCount: mechants.length,
+      //       itemBuilder: (BuildContext context, int index) {
+      //         final path = mechants[index]["path"];
+      //         return merchant(context, path, () {});
+      //       },
+      //     )),
       const SizedBox(height: 30.0),
     ]));
   }

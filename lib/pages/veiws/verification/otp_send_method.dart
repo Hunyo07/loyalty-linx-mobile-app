@@ -48,7 +48,7 @@ class _ApplyCreditOtpState extends State<ApplyCreditOtp> {
         builder: (context) {
           return const Center(child: CircularProgressIndicator());
         });
-    var url = Uri.parse('https://loyaltylinx.cyclic.app/api/user/send-otp');
+    var url = Uri.parse('https://loyalty-linxapi.vercel.app/api/user/send-otp');
     var response = await http.post(url,
         headers: {
           'Content-Type': 'application/json',

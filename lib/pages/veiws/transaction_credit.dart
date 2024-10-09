@@ -117,17 +117,7 @@ class Transaction extends StatelessWidget {
           // const TransactBody(),
           Expanded(
             child: CustomScrollView(
-              slivers: [
-                SliverList(
-                    delegate: SliverChildListDelegate([
-                  Row(children: [
-                    Container(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                        child: const Text("History",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600))),
-                  ]),
-                ])),
+              slivers: <Widget>[
                 SliverList.builder(
                     itemCount: staticTransactData.length,
                     itemBuilder: (BuildContext context, int index) {
@@ -135,6 +125,7 @@ class Transaction extends StatelessWidget {
                       final action = staticTransactData[index]['action'];
                       final date = staticTransactData[index]['date'];
                       final amount = staticTransactData[index]['amount'];
+                      final status = staticTransactData[index]['status'];
 
                       String formattedDue =
                           CurrencyFormatter.format(amount, euroSettings);
@@ -199,14 +190,10 @@ class Transaction extends StatelessWidget {
                                       children: [
                                         FittedBox(
                                           child: Icon(
-                                            staticTransactData[index]
-                                                        ['status'] ==
-                                                    'add'
+                                            status == 'add'
                                                 ? CupertinoIcons.add
                                                 : CupertinoIcons.minus,
-                                            color: staticTransactData[index]
-                                                        ['status'] ==
-                                                    'add'
+                                            color: status == 'add'
                                                 ? Colors.green
                                                 : Colors.red,
                                             size: 12,
@@ -215,12 +202,9 @@ class Transaction extends StatelessWidget {
                                         FittedBox(
                                           child: Text(formattedDue,
                                               style: TextStyle(
-                                                  color:
-                                                      staticTransactData[index]
-                                                                  ['status'] ==
-                                                              'add'
-                                                          ? Colors.green
-                                                          : Colors.red.shade600,
+                                                  color: status == 'add'
+                                                      ? Colors.green
+                                                      : Colors.red.shade600,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12)),
                                         ),

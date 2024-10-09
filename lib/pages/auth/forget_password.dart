@@ -17,15 +17,15 @@ class ForgetPassword extends StatefulWidget {
   State<ForgetPassword> createState() => _ForgetPasswordState();
 }
 
-var _sendVia = 'Email';
-var apiParams = 'email';
+var _sendVia = 'Mobile No';
+var apiParams = 'mobileNo';
 String? userId;
 String? secretCode;
 
-const apiFogotPasw = "https://loyaltylinx.cyclic.app/api/user/find-account";
-const apiValidate = "https://loyaltylinx.cyclic.app/api/user/validate-code";
+const apiFogotPasw = "https://loyalty-linxapi.vercel.app/api/user/find-account";
+const apiValidate = "https://loyalty-linxapi.vercel.app/api/user/validate-code";
 const apiUrlUpdatePass =
-    "https://loyaltylinx.cyclic.app/api/user/change-password";
+    "https://loyalty-linxapi.vercel.app/api/user/change-password";
 
 final _recoveryController = TextEditingController();
 
@@ -41,8 +41,7 @@ Future<void> sendMethod(context, widget) async {
   //         sendTo: _sendVia == 'Email' ? widget.email : widget.mobileNo)),
   //     (Route<dynamic> route) => false);
 }
-
-SingingCharacter? _character = SingingCharacter.email;
+SingingCharacter? _character = SingingCharacter.mobileNumber;
 
 class _ForgetPasswordState extends State<ForgetPassword> {
   Future findAccount(String recoveryAccount, context) async {
@@ -60,10 +59,11 @@ class _ForgetPasswordState extends State<ForgetPassword> {
     );
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      debugPrint(json);
+      debugPrint(response.body.toString());
+
       setState(() {
-        userId = json['userId'];
-        secretCode = json['secretCode'];
+        userId = json['userId'].toString();
+        secretCode = json['secretCode'].toString();
       });
       Navigator.push(
           context,
@@ -75,7 +75,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
       Navigator.of(context, rootNavigator: true).pop();
       final json = jsonDecode(response.body);
       final message = json['message'];
-      await showMessage(title: "Failed to fint account", message: message);
+      await showMessage(title: "Failed to find account", message: message);
     }
   }
 
@@ -115,11 +115,9 @@ class _ForgetPasswordState extends State<ForgetPassword> {
               title: const Text("Email"),
               leading: Radio<SingingCharacter>(
                 onChanged: (SingingCharacter? value) {
-                  setState(() {
-                    _recoveryController.clear();
-                    _sendVia = "Email";
-                    _character = value;
-                  });
+                  showMessage(
+                      title: "Opps!",
+                      message: "Sending via email is not supported yet");
                 },
                 value: SingingCharacter.email,
                 groupValue: _character,
@@ -439,6 +437,12 @@ class NewPasswordFormState extends State<NewPasswordForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/homeView', (route) => false);
+            },
+            icon: Icon(Icons.arrow_back)),
         backgroundColor: Theme.of(context).colorScheme.background,
       ),
       body: SafeArea(
@@ -466,7 +470,8 @@ class NewPasswordFormState extends State<NewPasswordForm> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a password';
                   }
-                  if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$')
+                  if (!RegExp(
+                          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
                       .hasMatch(value)) {
                     return 'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit';
                   }

@@ -48,7 +48,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
   }
 
   Future<void> uploadFileFacePhoto(File imageFile, String token) async {
-    Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/selfie');
+    Uri url = Uri.parse('https://loyalty-linxapi.vercel.app/api/upload/selfie');
 
     var request = http.MultipartRequest('POST', url);
 
@@ -82,7 +82,8 @@ class PreviewDetailsState extends State<PreviewDetails> {
     String facePhoto,
     String token,
   ) async {
-    Uri url = Uri.parse('https://loyaltylinx.cyclic.app/api/upload/valid-id');
+    Uri url =
+        Uri.parse('https://loyalty-linxapi.vercel.app/api/upload/valid-id');
 
     var request = http.MultipartRequest('POST', url);
 
@@ -139,7 +140,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
       String selfie,
       context) async {
     var url = Uri.parse(
-        'https://loyaltylinx.cyclic.app/api/user/account-verification');
+        'https://loyalty-linxapi.vercel.app/api/user/account-verification');
     var response = await http.post(
       url,
       headers: {
@@ -171,7 +172,7 @@ class PreviewDetailsState extends State<PreviewDetails> {
 
   Future<void> getProfile(String token, context) async {
     final response = await http.get(
-      Uri.parse('https://loyaltylinx.cyclic.app/api/user/profile'),
+      Uri.parse('https://loyalty-linxapi.vercel.app/api/user/profile'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -332,15 +333,8 @@ class PreviewDetailsState extends State<PreviewDetails> {
                                 context: context,
                                 builder: (context) {
                                   return const Center(
-                                      child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      CircularProgressIndicator(),
-                                      Text("Please wait...")
-                                    ],
-                                  ));
+                                    child: CircularProgressIndicator(),
+                                  );
                                 });
                             uploadFileFacePhoto(widget.facePhoto!, tokenMain!);
                             // uploadFileIdPhoto(widget.idPhoto!, userToken!);

@@ -201,12 +201,7 @@ PageRouteBuilder<dynamic> routeTransition(screenView) {
           end: Offset.zero,
         ).animate(animation),
         child: child,
-        // opacity: animation,
-        // child: ScaleTransition(
-        //   scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-        //       CurvedAnimation(parent: animation, curve: Curves.easeIn)),
-        //   child: child,
-        // )
+
       );
     },
   );

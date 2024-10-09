@@ -1,4 +1,4 @@
-// ignore_for_file: unused_local_variable
+// ignore_for_file: unused_local_variable, curly_braces_in_flow_control_structures
 
 import 'dart:convert';
 
@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loyaltylinx/pages/auth/login.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+// import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 final _emailController = TextEditingController();
 final _firstNameController = TextEditingController();
@@ -16,35 +17,44 @@ final _lastNameController = TextEditingController();
 final _passwordController = TextEditingController();
 final _passwordConfirmController = TextEditingController();
 final _middleController = TextEditingController();
-
+final _mobileNumberController = TextEditingController();
 final _monthController = TextEditingController();
 final _dayController = TextEditingController();
 final _yearController = TextEditingController();
 
 String code = "";
 var countryCode = '';
-String? phoneNumber;
+String? helperText = "Please input valid mobile number";
 
 class NumberRegister extends StatefulWidget {
   const NumberRegister({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _NumberRegisterState createState() => _NumberRegisterState();
+  State<NumberRegister> createState() => _NumberRegisterState();
 }
 
 String formattedMonth = DateFormat('MM').format(DateTime.now());
 
 bool _obscureText = true;
 bool _obscureTextConfirm = true;
-const apiUrlRegister = 'https://loyaltylinx.cyclic.app/api/user/register';
-const apiUrls = 'https://loyaltylinx.cyclic.app/api/user/login';
-const apiUrlProfile = 'https://loyaltylinx.cyclic.app/api/user/profile';
+bool _isCheck = true;
+const apiUrlRegister = 'https://loyalty-linxapi.vercel.app/api/user/register';
+const apiUrls = 'https://loyalty-linxapi.vercel.app/api/user/login';
+const apiUrlProfile = 'https://loyalty-linxapi.vercel.app/api/user/profile';
 const apiUrlValidate =
-    'https://loyaltylinx.cyclic.app/api/user/validate-code-login';
+    'https://loyalty-linxapi.vercel.app/api/user/validate-code-login';
+String? pattern;
+RegExp? regExp;
 
 class _NumberRegisterState extends State<NumberRegister> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    pattern = r'^[0-8]\d{9}$';
+    regExp = RegExp(pattern!);
+    super.initState();
+  }
 
   Future register(context) async {
     showDialog(
@@ -54,7 +64,6 @@ class _NumberRegisterState extends State<NumberRegister> {
         builder: (context) {
           return const Center(child: CircularProgressIndicator());
         });
-
     final response = await http.post(
       Uri.parse(apiUrlRegister),
       headers: {'Content-Type': 'application/json'},
@@ -64,7 +73,7 @@ class _NumberRegisterState extends State<NumberRegister> {
         'firstName': _firstNameController.text.toString(),
         'middleName': _middleController.text.toString(),
         'lastName': _lastNameController.text.toString(),
-        'mobileNo': phoneNumber,
+        'mobileNo': '0${_mobileNumberController.text.toString()}',
         'birthdate':
             "${_monthController.text}-${_dayController.text}-${_yearController.text}",
       }),
@@ -72,31 +81,18 @@ class _NumberRegisterState extends State<NumberRegister> {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      // Navigator.of(context).pushAndRemoveUntil(
-      //     routeTransition(Verification(
-      //       apiUrlValidate: apiUrlValidate,
-      //       apiUrlLogin: apiUrls,
-      //       passWord: _passwordConfirmController.text,
-      //       email: _emailController.text,
-      //       mobileNo: "$phoneNumber",
-      //     )),
-      //     (route) => false);
-      Navigator.pushAndRemoveUntil(
-          context,
-          routeTransition(LoginPage(
-            mobileNo: phoneNumber,
-          )),
-          (route) => false);
       _emailController.clear();
       _passwordController.clear();
       _passwordConfirmController.clear();
       _firstNameController.clear();
       _lastNameController.clear();
       _middleController.clear();
-      phoneNumber = '';
+      _mobileNumberController.clear();
       _dayController.clear();
       _monthController.clear();
       _yearController.clear();
+      showMessageSccess(
+          title: "Success!", message: "You registered successfully!");
     } else {
       Navigator.of(context, rootNavigator: true).pop();
       final json = jsonDecode(response.body);
@@ -105,7 +101,14 @@ class _NumberRegisterState extends State<NumberRegister> {
     }
   }
 
-  PhoneNumber number = PhoneNumber(isoCode: 'PH');
+  // PhoneNumber number = PhoneNumber(isoCode: 'PH');
+  bool validatePhoneNumber(String value) {
+    String pattern = r'^\+?[\d\s()-]*$';
+    RegExp regExp = RegExp(pattern);
+    return regExp.hasMatch(value);
+  }
+
+  bool? phoneNumber = true;
 
   @override
   Widget build(BuildContext context) {
@@ -114,154 +117,67 @@ class _NumberRegisterState extends State<NumberRegister> {
         backgroundColor: Theme.of(context).colorScheme.background,
         body: SingleChildScrollView(
             child: SafeArea(
-          child: Padding(
+          child: Container(
+            color: Theme.of(context).colorScheme.background,
             padding: const EdgeInsets.all(16.0),
             child: Form(
               key: _formKey,
               onChanged: () {},
               child: Column(
                 children: [
-                  Image.asset(
-                    'assets/images/loyaltilinxicon.png',
-                    fit: BoxFit.scaleDown,
-                  ),
                   const SizedBox(
                     height: 22,
                   ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width / 3,
-                          child: const Text("First Name"),
+                  title("Mobile Number"),
+                  IntlPhoneField(
+                    disableAutoFillHints: true,
+                    autovalidateMode: AutovalidateMode.disabled,
+                    controller: _mobileNumberController,
+                    showCountryFlag: false,
+                    decoration: InputDecoration(
+                      helperMaxLines: 2,
+                      helperText: phoneNumber == false ? helperText! : null,
+                      helperStyle: TextStyle(
+                          fontSize: 10,
+                          color: phoneNumber == false
+                              ? const Color.fromARGB(255, 255, 121, 111)
+                              : Theme.of(context).colorScheme.primary),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            width: 2,
+                            color: phoneNumber == false
+                                ? Colors.red
+                                : Colors.amber.shade700),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: phoneNumber != false
+                              ? Theme.of(context).colorScheme.secondaryContainer
+                              : Colors.red,
                         ),
-                        const SizedBox(width: 12.0),
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width / 3,
-                          child: const Text("Last Name"),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.primaryContainer,
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                          width: 1.5,
                         ),
-                        const SizedBox(width: 12.0),
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width / 5,
-                          child: const Text("M.I"),
-                        )
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width / 3,
-                            child: createAccInput(
-                              context,
-                              (value) {},
-                              20,
-                              (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Please fill up";
-                                }
-                                return null;
-                              },
-                              "",
-                              _firstNameController,
-                            )),
-                        const SizedBox(width: 12.0),
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width / 3,
-                            child: createAccInput(
-                              context,
-                              (value) {},
-                              20,
-                              (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Please fill up";
-                                }
-                                return null;
-                              },
-                              "",
-                              _lastNameController,
-                            )),
-                        const SizedBox(width: 12.0),
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width / 5,
-                            child: createAccInput(
-                              context,
-                              (value) {},
-                              1,
-                              (value) {
-                                return null;
-                              },
-                              "Optional",
-                              _middleController,
-                            )),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  const SizedBox(height: 16.0),
-                  const Row(children: [
-                    Text('Mobile Number'),
-                  ]),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  InternationalPhoneNumberInput(
-                    onInputValidated: (bool value) {},
-                    selectorConfig: const SelectorConfig(
-                      selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-                    ),
-                    onInputChanged: (PhoneNumber number) {
-                      // print(number);
-                      phoneNumber = "0${number.phoneNumber!.substring(3)}";
-                      // print(phoneNumber);
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Phone number is required';
+                    initialCountryCode: 'PH',
+                    onChanged: (value) {
+                      if (value.number.length == 10) {
+                        phoneNumber = true;
+                      } else {
+                        phoneNumber = false;
                       }
-                      return null;
                     },
-                    keyboardType: const TextInputType.numberWithOptions(
-                        signed: true, decimal: true),
-                    inputBorder: const OutlineInputBorder(),
-                    onSaved: (PhoneNumber number) {},
-                    ignoreBlank: false,
-                    maxLength: 11,
-                    formatInput: true,
-                    initialValue: number,
-                    spaceBetweenSelectorAndTextField: 1,
-                    autoValidateMode: AutovalidateMode.disabled,
-                    inputDecoration: InputDecoration(
-                        hintText: '09*********',
-                        errorStyle: const TextStyle(fontSize: 10),
-                        errorMaxLines: 2,
-                        focusedErrorBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.red)),
-                        errorBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.red)),
-                        enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                width: .5,
-                                color: Theme.of(context).colorScheme.primary)),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                              width: 1.5, color: Colors.amber.shade700),
-                        )),
                   ),
-                  const Row(children: [
-                    Text('Email'),
-                  ]),
                   const SizedBox(
-                    height: 16,
+                    height: 10,
                   ),
+                  title("Email"),
                   createAccInput(
                     context,
                     (value) {},
@@ -271,18 +187,76 @@ class _NumberRegisterState extends State<NumberRegister> {
                         return "Please input valid email";
                       }
                     },
-                    "",
+                    "Enter you email address",
                     _emailController,
                   ),
                   const SizedBox(
                     height: 16,
                   ),
-                  const Row(children: [
-                    Text('Password'),
-                  ]),
-                  const SizedBox(
-                    height: 16,
+                  title("First Name"),
+                  createAccInput(
+                    context,
+                    (value) {},
+                    20,
+                    (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please fill up";
+                      }
+                      return null;
+                    },
+                    "Enter your first name",
+                    _firstNameController,
                   ),
+                  const SizedBox(height: 16.0),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width / 1.4,
+                            child: Column(
+                              children: [
+                                title("Last Name"),
+                                createAccInput(
+                                  context,
+                                  (value) {},
+                                  20,
+                                  (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Please fill up";
+                                    }
+                                    return null;
+                                  },
+                                  "Enter your last name",
+                                  _lastNameController,
+                                ),
+                              ],
+                            )),
+                        const SizedBox(width: 12.0),
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width / 5,
+                            child: Column(
+                              children: [
+                                title("M.I"),
+                                createAccInput(
+                                  context,
+                                  (value) {},
+                                  1,
+                                  (value) {
+                                    return null;
+                                  },
+                                  "",
+                                  _middleController,
+                                ),
+                              ],
+                            )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  title("Password"),
                   TextFormField(
                     controller: _passwordController,
                     onChanged: (pass) {
@@ -306,6 +280,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                       return null;
                     },
                     decoration: InputDecoration(
+                        filled: true,
+                        fillColor:
+                            Theme.of(context).colorScheme.primaryContainer,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureText
@@ -327,11 +304,12 @@ class _NumberRegisterState extends State<NumberRegister> {
                             borderSide: BorderSide(color: Colors.red)),
                         enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                                width: .5,
-                                color: Theme.of(context).colorScheme.primary)),
+                                width: 1,
+                                color:
+                                    Theme.of(context).colorScheme.secondary)),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              width: 1.5, color: Colors.amber.shade700),
+                              width: 2, color: Colors.amber.shade700),
                         )),
                     textInputAction: TextInputAction.done,
                     obscureText: _obscureText,
@@ -342,12 +320,7 @@ class _NumberRegisterState extends State<NumberRegister> {
                   const SizedBox(
                     height: 16,
                   ),
-                  const Row(children: [
-                    Text('Confirm password'),
-                  ]),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  title("Confirm password"),
                   TextFormField(
                     onTapOutside: (event) {
                       FocusManager.instance.primaryFocus?.unfocus();
@@ -380,6 +353,9 @@ class _NumberRegisterState extends State<NumberRegister> {
                             });
                           },
                         ),
+                        filled: true,
+                        fillColor:
+                            Theme.of(context).colorScheme.primaryContainer,
                         errorStyle: const TextStyle(fontSize: 10),
                         errorBorder: const OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.red)),
@@ -387,14 +363,57 @@ class _NumberRegisterState extends State<NumberRegister> {
                             borderSide: BorderSide(color: Colors.red)),
                         enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
-                                width: .5,
-                                color: Theme.of(context).colorScheme.primary)),
+                                width: 1,
+                                color:
+                                    Theme.of(context).colorScheme.secondary)),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
-                              width: 1.5, color: Colors.amber.shade700),
+                              width: 2, color: Colors.amber.shade700),
                         )),
                     textInputAction: TextInputAction.done,
                     obscureText: _obscureTextConfirm,
+                  ),
+                  const SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Checkbox(
+                          value: _isCheck,
+                          onChanged: (value) {
+                            setState(() {
+                              _isCheck = value!;
+                            });
+                          }),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 1.3,
+                        child: Text.rich(
+                          maxLines: 3,
+                          TextSpan(
+                              text: "I have read and accept Sample App ",
+                              style: const TextStyle(
+                                fontSize: 12,
+                              ),
+                              children: [
+                                TextSpan(
+                                    text: "Terms and Conditions ",
+                                    style: TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.amber.shade900,
+                                        decorationThickness: 2,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber.shade900)),
+                                const TextSpan(text: "and "),
+                                TextSpan(
+                                    text: "Privacy Policy",
+                                    style: TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.amber.shade900,
+                                        decorationThickness: 2,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber.shade900)),
+                              ]),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16.0),
                   ElevatedButton(
@@ -407,14 +426,37 @@ class _NumberRegisterState extends State<NumberRegister> {
                         elevation: 5,
                       ),
                       onPressed: () {
-                        if (_formKey.currentState!.validate()) {
+                        //
+                        if (_formKey.currentState!.validate() &&
+                            _isCheck != false &&
+                            _mobileNumberController.text.isNotEmpty &&
+                            !regExp!.hasMatch(
+                                _mobileNumberController.text.toString())) {
                           register(context);
+                        } else {
+                          setState(() {
+                            phoneNumber = false;
+                          });
+                          if (_mobileNumberController.text.isEmpty) {
+                            setState(() {
+                              helperText = "Please input valid mobile number";
+                            });
+                          } else if (regExp!.hasMatch(
+                              _mobileNumberController.text.toString())) {
+                            setState(() {
+                              helperText =
+                                  'Please input valid mobile number that starts with number 9';
+                            });
+                          } else
+                            (setState(() {
+                              phoneNumber = true;
+                            }));
                         }
                       },
                       child: const FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            "Sign me up",
+                            "SUBMIT",
                             style:
                                 TextStyle(color: Colors.white, fontSize: 20.0),
                           ))),
@@ -424,6 +466,22 @@ class _NumberRegisterState extends State<NumberRegister> {
             ),
           ),
         )));
+  }
+
+  Column title(String title) {
+    return Column(children: [
+      Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      const SizedBox(
+        height: 8.0,
+      )
+    ]);
   }
 
   TextFormField createAccInput(
@@ -445,8 +503,10 @@ class _NumberRegisterState extends State<NumberRegister> {
       controller: controller,
       validator: (value) => validator(value),
       decoration: InputDecoration(
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.primaryContainer,
           hintText: hintText,
-          hintStyle: const TextStyle(fontSize: 10),
+          hintStyle: const TextStyle(fontSize: 12),
           errorStyle: const TextStyle(fontSize: 10),
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red)),
@@ -454,16 +514,16 @@ class _NumberRegisterState extends State<NumberRegister> {
               borderSide: BorderSide(color: Colors.red)),
           enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                  width: .5, color: Theme.of(context).colorScheme.primary)),
+                  width: 1, color: Theme.of(context).colorScheme.secondary)),
           focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(width: 1.5, color: Colors.amber.shade700),
+            borderSide: BorderSide(width: 2, color: Colors.amber.shade700),
           )),
     );
   }
 
   AppBar buildAppBar() {
     return AppBar(
-      title: const Text("Register",
+      title: const Text("",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
       backgroundColor: Colors.transparent,
       leading: IconButton(
@@ -502,6 +562,31 @@ class _NumberRegisterState extends State<NumberRegister> {
                 child: const Text("ok"),
                 onPressed: () {
                   Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        });
+  }
+
+  showMessageSccess({required String title, required String message}) {
+    showCupertinoDialog(
+        context: context,
+        builder: (contex) {
+          return CupertinoAlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("ok"),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      routeTransition(LoginPage(
+                        mobileNo: "0${_mobileNumberController.text.toString()}",
+                      )),
+                      (route) => false);
                 },
               ),
             ],
